@@ -21,22 +21,16 @@ package game.login;
  * --
  */
 
-import game.cassandra.dao.DAOLogin;
-import game.cassandra.data.Login;
-//import game.database.DbConect;
-
+import game.cassandra.dao.CassandraDAOLogin;
+import game.database.login.vo.Login;
 import game.systems.WorldMap;
-import game.utils.Configures;
 
-import java.sql.SQLException;
 import java.util.Properties;
 import java.util.logging.Logger;
 
 import javax.security.auth.login.AccountNotFoundException;
 import javax.security.auth.login.CredentialException;
 
-import com.sun.sgs.app.AppContext;
-import com.sun.sgs.app.DataManager;
 import com.sun.sgs.app.ManagedReference;
 import com.sun.sgs.auth.Identity;
 import com.sun.sgs.auth.IdentityAuthenticator;
@@ -65,16 +59,12 @@ public class NamePasswordAuthenticator implements IdentityAuthenticator {
 	private ManagedReference<Login> loginRef = null;
 
 	public NamePasswordAuthenticator(Properties properties) {
+
 		logger.info("****** Initializing JMMORPG ******");
-		logger.info("Initializing Authenticator... ");
-		//try {
-		//	new Configures(); // NOTE: O carregamendo das config deve ser a
-								// primeira execucao.
-		//	DbConect.getInstance();
-			new WorldMap();
-	//	} catch (SQLException e) {
-		//	e.printStackTrace();
-		//}
+		logger.info("++++++ Initializing Authenticator ++++++ ");
+
+		new WorldMap();
+
 	}
 
 	/**
@@ -102,14 +92,23 @@ public class NamePasswordAuthenticator implements IdentityAuthenticator {
 		 * searching a user in cassandra , if the user not exists, create a user
 		 * and give the user a default hero with random hero class
 		 */
-		DAOLogin dao = new DAOLogin();
+
+		// DAOLogin dao = new DAOLogin();
+
+		CassandraDAOLogin dao = new CassandraDAOLogin();
+
 		Login login = null;
 		try {
-
+			
+			dao.selectByLoginPassword(npc.getName(),
+					new String(npc.getPassword()));
+			
 			logger.info("session.getname " + npc.getName() + "pwd "
 					+ npc.getPassword().toString());
-			dao.SearchingUserUseSecondaryIndexByNameAndPassword(npc.getName(),
-					new String(npc.getPassword()));
+
+			//dao.selectAll();
+			// dao.SearchingUserUseSecondaryIndexByNameAndPassword(npc.getName(),
+			// new String(npc.getPassword());
 			if (dao.getVos() != null && !dao.getVos().isEmpty()) {
 				login = dao.getVos().firstElement();
 
@@ -132,12 +131,12 @@ public class NamePasswordAuthenticator implements IdentityAuthenticator {
 				 * character by doing a slicequery specifying the
 				 * range(username_heroname_0 username_heroname_zzzzzzzzz)
 				 */
-				dao.insertUserIntoCassandra(npc.getName(),
-						new String(npc.getPassword()), true);
+			//	dao.insertUserIntoCassandra(npc.getName(),
+			//			new String(npc.getPassword()), true);
 				// the get the created user information from the database
-				dao.SearchingUserUseSecondaryIndexByNameAndPassword(
-						npc.getName(), new String(npc.getPassword()));
-				login = dao.getVos().firstElement();
+			//	dao.SearchingUserUseSecondaryIndexByNameAndPassword(
+			//			npc.getName(), new String(npc.getPassword()));
+			//	login = dao.getVos().firstElement();
 
 			}
 		} catch (Exception e) {

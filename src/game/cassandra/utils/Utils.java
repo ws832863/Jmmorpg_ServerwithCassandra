@@ -16,7 +16,7 @@ public class Utils {
 	// transform a String to java.sql.date. in order to pass the old database
 	public static java.sql.Date dateFromString(String dateString) {
 		//System.out.println(dateString + "length " +dateString.length());
-		
+		logger.debug(dateString + "length " +dateString.length());
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
 		if(dateString.length()==10){
 			sdf=new SimpleDateFormat("yyyy-MM-dd");

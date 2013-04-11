@@ -70,7 +70,7 @@ public class CassandraDAOLogin {
 	}
 
 	public void selectByPk(int rowKey) {
-		String key =String.valueOf(rowKey);
+		String key = String.valueOf(rowKey);
 		vos.removeAllElements();
 
 		SliceQuery<String, String, String> query = HFactory.createSliceQuery(
@@ -83,14 +83,70 @@ public class CassandraDAOLogin {
 				query, null, "\uFFFF", false);
 
 		HashMap<String, String> tempResult = new HashMap<String, String>();
-		
+
 		while (iterator.hasNext()) {
 			HColumn<String, String> c = iterator.next();
 			tempResult.put(c.getName(), c.getValue());
 		}
-		
+
 		vos.add(this.mappingHashMapIntoLoginObject(key, tempResult));
 
+	}
+
+	public void selectByLoginPassword(String username, String password) {
+		vos.removeAllElements();
+		int row_count = 10;
+		boolean userverified = false;
+		RangeSlicesQuery<String, String, String> rangeSliceQuery = HFactory
+				.createRangeSlicesQuery(keyspaceOperator, stringSerializer,
+						stringSerializer, stringSerializer);
+		rangeSliceQuery.setColumnFamily(ColumnFamilyName);
+		rangeSliceQuery.setRange(null, null, false, Integer.MAX_VALUE);// get
+																		// 1000
+																		// columns
+		rangeSliceQuery.setRowCount(row_count);
+		rangeSliceQuery.setKeys(null, null);
+		rangeSliceQuery.addEqualsExpression("username", username);
+
+		QueryResult<OrderedRows<String, String, String>> result = rangeSliceQuery
+				.execute();
+		OrderedRows<String, String, String> rows = result.get();
+
+		if (rows.getCount() != 0) {// at least one rows returned
+
+			Iterator<Row<String, String, String>> rowsIterator = rows
+					.iterator();
+
+			// System.out.println("has next " + rowsIterator.hasNext());
+			while (rowsIterator.hasNext()) {
+				Row<String, String, String> row = rowsIterator.next();
+				ColumnSlice<String, String> cs = row.getColumnSlice();
+
+				HashMap<String, String> tempMap = new HashMap<String, String>();
+				for (HColumn<String, String> c : cs.getColumns()) {// add all
+					tempMap.put(c.getName(), c.getValue());
+
+				}
+
+				logger.info("searching database with " + row.getKey()
+						+ " resultmap= " + tempMap.toString());
+
+				if (tempMap.get("userpassword").equals(password)) {
+					logger.info("user verified");
+					userverified = true;
+					vos.add(this.mappingHashMapIntoLoginObject(row.getKey(),
+							tempMap));
+
+				}
+			}
+			if (!userverified) {
+
+				System.out.println("User gives Wrong Password");
+			}
+
+		} else {// no result returnd
+			System.out.println("No User was found in Cassandra");
+		}
 	}
 
 	public void selectAll() {
@@ -154,7 +210,7 @@ public class CassandraDAOLogin {
 
 		// pass a row key to a login object
 		login.setId(Integer.valueOf(rowkey));
-		
+
 		login.setBirth(Utils.dateFromString(h.get("birthday")));
 		login.setUser_password(h.get("userpassword"));
 		login.setLogin(h.get("username"));
@@ -372,19 +428,20 @@ public class CassandraDAOLogin {
 			System.out.println(vo.toString());
 		}
 	}
+
 	/**
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		//CassandraDAOLogin.createLoginSchema();
-		//CassandraDAOLogin.prepopulateLoginData();
-		CassandraDAOLogin dao=new CassandraDAOLogin();
-		//dao.selectAll();
+		// CassandraDAOLogin.createLoginSchema();
+		// CassandraDAOLogin.prepopulateLoginData();
+		CassandraDAOLogin dao = new CassandraDAOLogin();
+		// dao.selectAll();
 		dao.selectByPk(1);
 		dao.testVectorClans();
 		dao.selectByPk(2);
 		dao.testVectorClans();
-		
+
 	}
 
 }

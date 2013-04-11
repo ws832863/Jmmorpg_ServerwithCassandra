@@ -1,7 +1,7 @@
 package game.network;
 
-import game.cassandra.data.Player;
 import game.core.CoreManagedObjects;
+import game.database.player.vo.Player;
 import game.systems.Room;
 
 import java.io.Serializable;
@@ -147,6 +147,7 @@ public class ManagerSessionPlayer  extends CoreManagedObjects implements Seriali
     	//Envia um aviso a todos os players deste canal que este player deslogou
     	//null = N�o manda a informa��o dasess�o que envio a mensagem
     	//getSession = passa a sess�o como responsavel pelo envio da mensagem
+    	
     	Channel channel =AppContext.getChannelManager().getChannel("map_"+playerRef.get().getMapId());
     	channel.send(null, encodeString("m/loggout/"+playerRef.get().getLoginId()+"/"));
     	

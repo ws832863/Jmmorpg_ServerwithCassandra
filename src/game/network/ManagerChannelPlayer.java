@@ -12,72 +12,85 @@ import java.util.logging.Logger;
 import com.sun.sgs.app.Channel;
 import com.sun.sgs.app.ChannelListener;
 import com.sun.sgs.app.ClientSession;
+
 /**
- * this channel use to send broadcast to all user
- * move command
+ * this channel use to send broadcast to all user move command
+ * 
  * @author parallels
- *
+ * 
  */
 public class ManagerChannelPlayer implements Serializable, ChannelListener {
 
 	private static final long serialVersionUID = 8421775775445048325L;
 
-    private static final Logger logger =
-        Logger.getLogger(ManagerChannelPlayer.class.getName());
-    
+	private static final Logger logger = Logger
+			.getLogger(ManagerChannelPlayer.class.getName());
+
 	/** The message encoding. */
 	public static final String MESSAGE_CHARSET = "UTF-8";
-    
+
 	@Override
 	public void receivedMessage(Channel channel, ClientSession session,
 			ByteBuffer message) {
 		// check the message sent by player (session) in one channel
-		//  this message sent to the channel.
+		// this message sent to the channel.
 		channel.send(session, message);
 
 		if (logger.isLoggable(Level.INFO)) {
-	            logger.log(Level.INFO,
-	                "Channel message from {0} on channel {1}",
-	                new Object[] { session.getName(), channel.getName() }
-	            );
-	        }
+			logger.log(Level.INFO, "Channel message from {0} on channel {1}",
+					new Object[] { session.getName(), channel.getName() });
+		}
 		String[] msg = decodeString(message).split("/");
 		System.out.println(msg);
-		//the position of the player in the currentmap
-		if (msg[0].equals("m")){
-			String loginId = msg[1];
+		// the position of the player in the currentmap
+		if (msg[0].equals("m")) {
+			int loginId = Integer.valueOf(msg[1]);
 			int tileX = Integer.valueOf(msg[4]);
 			int tileY = Integer.valueOf(msg[5]);
-			
-			// Check if this player j occupied another position earlier releases posioe
-			
-			// Check if the reported position different from the previous position
-			
-			MapWorld[][] mapWorlds = WorldMap.getWorld().get(channel.getName());// get the pre loaded world, every channelname is
-			//i am wondering if this mapWorld.getWorld() has a instance..
-		
-			//also a map name, every map use a specified channel
+
+			// Check if this player j occupied another position earlier releases
+			// posioe
+
+			// Check if the reported position different from the previous
+			// position
+
+			MapWorld[][] mapWorlds = WorldMap.getWorld().get(channel.getName());// get
+																				// the
+																				// pre
+																				// loaded
+																				// world,
+																				// every
+																				// channelname
+																				// is
+			// i am wondering if this mapWorld.getWorld() has a instance..
+
+			// also a map name, every map use a specified channel
 			for (int x = 0; x < mapWorlds.length; x++) {
 				for (int y = 0; y < mapWorlds[0].length; y++) {
 					MapWorld mapWorld = mapWorlds[x][y];
-					if (!mapWorld.getLoginIDs().isEmpty()){//there are players in the map ,not empty
-						if (mapWorld.getLoginIDs().contains(loginId)){
+					if (!mapWorld.getLoginIDs().isEmpty()) {// there are players
+															// in the map ,not
+															// empty
+						if (mapWorld.getLoginIDs().contains(loginId)) {
 							mapWorld.getLoginIDs().remove(loginId);
 						}
 					}
-				}	
+				}
 			}
-			
+
 			// "m/loginId/ClasseId/PlayerName/x/y/position"
-			// this.hostConnect.sendChannel("m/"+compPlayer.getLoginId()+"/"+compPlayer.getClasseId()+"/"+compPlayer.getName()+"/"+transform.getFuturePositionTileX()+"/"+transform.getFuturePositionTileY()+"/1", Util.CHANNEL_MAP);
+			// this.hostConnect.sendChannel("m/"+compPlayer.getLoginId()+"/"+compPlayer.getClasseId()+"/"+compPlayer.getName()+"/"+transform.getFuturePositionTileX()+"/"+transform.getFuturePositionTileY()+"/1",
+			// Util.CHANNEL_MAP);
 			MapWorld mapWorld = mapWorlds[tileX][tileY];
 			mapWorld.getLoginIDs().add(loginId);
-			System.out.println("Current/destination? Position Map(tilex/tiley):["+tileX+"/"+tileY+"] - LoginId: " + loginId);
-			
+			System.out
+					.println("Current/destination? Position Map(tilex/tiley):["
+							+ tileX + "/" + tileY + "] - LoginId: " + loginId);
+
 			channel.send(session, encodeString("channel send message "));
 		}
 	}
-	
+
 	/**
 	 * Encodes a {@code String} into a {@link ByteBuffer}.
 	 * 

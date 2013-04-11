@@ -9,17 +9,17 @@ import java.sql.Date;
  * @author Michel Montenegro
  * 
  */
-public class Player extends CoreManagedObjects{
+public class Player extends CoreManagedObjects {
 
 	private static final long serialVersionUID = -1818861658962193220L;
-	
+
 	private int id;
 	private String name;
 
 	private int loginId;
 	private int mapId;
 	private int classeId;
-	
+
 	private int hpMax;
 	private int hpCurr;
 	private int manaMax;
@@ -47,7 +47,6 @@ public class Player extends CoreManagedObjects{
 		super("", "");
 	}
 
-
 	public int getId() {
 		return id;
 	}
@@ -61,9 +60,11 @@ public class Player extends CoreManagedObjects{
 	}
 
 	public void setName(String name) {
+
 		this.name = name;
 		setObjectName(name);
 		setObjectDescription("Objeto que representa o Player");
+
 	}
 
 	public int getHpMax() {
@@ -191,7 +192,7 @@ public class Player extends CoreManagedObjects{
 	}
 
 	public void setClasseId(int classeId) {
-	    this.classeId = classeId;
+		this.classeId = classeId;
 	}
 
 	public int getHpCurr() {
@@ -265,6 +266,5 @@ public class Player extends CoreManagedObjects{
 	public void setSector(int sector) {
 		this.sector = sector;
 	}
-
 
 }

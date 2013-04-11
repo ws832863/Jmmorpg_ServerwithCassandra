@@ -39,7 +39,7 @@ public class WorldMap {
 						mapWorld.setTerrainType(Util.TERRAIN_GROUND);
 						mapWorld.setNpcId(-1);
 						mapWorld.setCanSpawnMob(false);
-						mapWorld.setLoginIDs(new TreeSet<String>());  //maybe the userlist of this map?
+						mapWorld.setLoginIDs(new TreeSet<Integer>());  //maybe the userlist of this map?
 						
 						mapWorlds[x][y] = mapWorld;
 					}

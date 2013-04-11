@@ -1,7 +1,10 @@
 package game.cassandra.conn;
 
-import game.cassandra.dao.DAOLogin;
-import game.cassandra.dao.DAOPlayer;
+import game.cassandra.dao.CassandraDAOClasse;
+import game.cassandra.dao.CassandraDAOLogin;
+import game.cassandra.dao.CassandraDAOMap;
+import game.cassandra.dao.CassandraDAOPlayer;
+import game.cassandra.dao.CassandraDAORace;
 
 import java.util.UUID;
 
@@ -14,31 +17,21 @@ public class InitialingCassandra {
 		/**
 		 * here we can create the schema and prepopulate the database
 		 */
+		CassandraDAOLogin login = new CassandraDAOLogin();
+		CassandraDAOPlayer player = new CassandraDAOPlayer();
+		CassandraDAOMap map = new CassandraDAOMap();
+		CassandraDAORace race = new CassandraDAORace();
+		CassandraDAOClasse classe = new CassandraDAOClasse();
 		
-		
-		GameSchemaCreation gsc = new GameSchemaCreation();
-		 DataPrepopulate dp = new DataPrepopulate();
-		dp.preInsertLoginUserData();
-
-		DAOLogin dao = new DAOLogin();
-		DAOPlayer player = new DAOPlayer();
-		UUID uuid=player.getUUIDbySpecifyHeroName("player1");
-		
-		// // System.out.println( player.getUUIDbySpecifyHeroName("player1"));
-		// Player pp ;//= player.getUserHero("player1");
-		// pp=player.getHeroByUserNameAndHeroName(uuid, "player1", "player1");
-		// System.out.println("" + pp.getClasseId() + pp.getLoginId()
-		// + pp.getCon());
-		// // dao.selectAll();
-
-		// dao.selectByLoginPassword("player2", "player");
-		// dao.SearchingUserUseSecondaryIndexByNameAndPassword("player1",
-		// "player");
-		dao.SearchingUserUseSecondaryIndexByNameAndPassword("abcd", "abcd");
-		// dao.SearchingUserUseSecondaryIndexByNameAndPassword("player2",
-		// "player");
-
-		dao.testVectorLogin();
-
+		CassandraDAOLogin.createLoginSchema();
+		CassandraDAOLogin.prepopulateLoginData();
+		CassandraDAOPlayer.createPlayerSchema();
+		CassandraDAOPlayer.prepopulateLoginData();
+		CassandraDAOMap.createMapSchema();
+		CassandraDAOMap.prepopulateMapData();
+		CassandraDAORace.createRaceSchema();
+		CassandraDAORace.prepopulateMapData();
+		CassandraDAOClasse.createClasseSchema();
+		CassandraDAOClasse.prepopulateClasseData();
 	}
 }
