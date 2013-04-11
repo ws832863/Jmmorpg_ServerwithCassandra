@@ -1,7 +1,6 @@
 package game.cassandra.dao;
 
 import game.cassandra.conn.CassandraConnection;
-import game.cassandra.conn.GameSchemaCreation;
 import game.database.classe.vo.Classe;
 
 import java.util.Arrays;
@@ -32,7 +31,7 @@ import org.apache.log4j.Logger;
 public class CassandraDAOClasse {
 
 	private final static Logger logger = Logger
-			.getLogger(GameSchemaCreation.class.getName());
+			.getLogger(CassandraDAOClasse.class.getName());
 
 	private final static Cluster gameCluster = CassandraConnection.getCluster();
 

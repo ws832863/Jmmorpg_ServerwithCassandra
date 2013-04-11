@@ -1,5 +1,5 @@
 package game.cassandra.conn;
-
+ 
 import java.text.SimpleDateFormat;
 import java.util.Date;
 

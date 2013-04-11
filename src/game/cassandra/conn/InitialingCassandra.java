@@ -1,10 +1,9 @@
 package game.cassandra.conn;
 
-import java.util.UUID;
-
 import game.cassandra.dao.DAOLogin;
 import game.cassandra.dao.DAOPlayer;
-import game.cassandra.data.Player;
+
+import java.util.UUID;
 
 public class InitialingCassandra {
 
@@ -25,12 +24,12 @@ public class InitialingCassandra {
 		DAOPlayer player = new DAOPlayer();
 		UUID uuid=player.getUUIDbySpecifyHeroName("player1");
 		
-		// System.out.println( player.getUUIDbySpecifyHeroName("player1"));
-		Player pp ;//= player.getUserHero("player1");
-		pp=player.getHeroByUserNameAndHeroName(uuid, "player1", "player1");
-		System.out.println("" + pp.getClasseId() + pp.getLoginId()
-				+ pp.getCon());
-		// dao.selectAll();
+		// // System.out.println( player.getUUIDbySpecifyHeroName("player1"));
+		// Player pp ;//= player.getUserHero("player1");
+		// pp=player.getHeroByUserNameAndHeroName(uuid, "player1", "player1");
+		// System.out.println("" + pp.getClasseId() + pp.getLoginId()
+		// + pp.getCon());
+		// // dao.selectAll();
 
 		// dao.selectByLoginPassword("player2", "player");
 		// dao.SearchingUserUseSecondaryIndexByNameAndPassword("player1",

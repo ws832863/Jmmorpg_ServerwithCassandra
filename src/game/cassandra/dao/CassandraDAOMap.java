@@ -100,7 +100,7 @@ public class CassandraDAOMap {
 	}
 	
 
-	public void selectAll() throws Exception {
+	public void selectAll()  {
 		// there is only one map in the database
 		HashMap<String, HashMap<String, String>> resultMap = new HashMap<String, HashMap<String, String>>();
 		vos.removeAllElements();
@@ -267,7 +267,7 @@ public class CassandraDAOMap {
 
 	}
 
-	public static void prepopulateMapDate() {
+	public static void prepopulateMapData() {
 
 		ColumnFamilyTemplate<String, String> columnFamilyTemplate = new ThriftColumnFamilyTemplate<String, String>(
 				keyspaceOperator, ColumnFamilyName, stringSerializer,
@@ -306,7 +306,7 @@ public class CassandraDAOMap {
 	// used for test this class
 	public static void main(String[] str) {
 		// CassandraDAOMap.createMapSchema();
-		// CassandraDAOMap.prepopulateMapDate();
+		// CassandraDAOMap.prepopulateMapData();
 		CassandraDAOMap dao = new CassandraDAOMap();
 		try {
 			dao.selectAll();
