@@ -1,0 +1,31 @@
+=========================
+@Autor Michel Montenegro
+=========================
+
+1. Copie todas as libs para o diretorio "${SGS_HOME}/lib".
+
+2. Copie todos os *.properties para o diretorio "${SGS_HOME}/conf". (exceto o app.properties)
+
+3. O "app.properties" fica dentro do diretorio "META-INF" (Do projeto!)
+
+4. Para gerar a distribuição vá em:
+a) File -> Export -> "JAR File".
+b) Options (Marque somente):
+- Export Geerated class files and resources
+- Compress the contents of the JAR file
+c) Salve o JAR file em ${SGS_HOME} ----> "/deploy/JMMORPG_SERVER.jar"
+
+5. Gerando o GeoMap apartir do "Colision.png"
+
+0- <Sem Cor>: Ground (Chão)
+1- Azul: Water (Agua)
+2- Verde: Montain (Montanha)
+3- Cinza: Wall (Muro)
+4- Vermelho: Area Spawn-Mob(Monstros)
+
+Observação:
+---------- |Terrestre | Maritimo | Aereo
+Ground---- |    O     |    X     |  O
+Water----- |    X     |    O     |  O
+Montain--- |    X     |    X     |  X
+Wall------ |    X     |    X     |  O

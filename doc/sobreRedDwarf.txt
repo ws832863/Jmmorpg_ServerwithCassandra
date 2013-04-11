@@ -1,0 +1,79 @@
+=========================
+@Autor Michel Montenegro
+=========================
+
+Vou falar o que aprendi, em um mini-tutorial, por favor corrigam qualquer erro e se possivel respondam as perguntas embutidas (Meu intuito e saber se entendi corretamente a parte que estudei).
+
+Site: http://www.reddwarfserver.org/
+Forum: https://sourceforge.net/apps/phpbb/reddwarf/index.php
+Video-Tutorial: http://sebastian.formzoo.com/2010/02/07/project-darkstar-chat-video-tutorial/
+Download: https://sourceforge.net/projects/reddwarf/files/0.10.2/
+- sgs-server-dist-0.10.2.zip (Distribuição para o Servidor)
+- sgs-client-dist-0.10.2.zip (Distribuição para o Cliente Java)
+- sgs-c-client-dist-0.10.2.zip (Distribuição para o Cliente C)
+Obs: Para C# as Libs são informadas no forum do RedDwarf.
+
+
+
+* No lado Servidor:
+
+1. Baixamos a versão para distribuição "sgs-server-dist-0.10.2.1". Este é o nosso real servidor.
+
+2. Quando executamos o servidor "sgs-server-dist-0.10.2.1/bin/sgs-boot.jar" ele procura por padrão os "jars executaveis" (Aonde esta o seu servidor) dentro da pasta "sgs-server-dist-0.10.2.1/deploy".
+
+3. O redDwarf funciona como um servior de aplicação em que o servidor desenvolvido por mim, vai ficar dentro do contexto do redDwarf (Agora me pergunto se eu criar 5 Jars "Servers" ele vai manter os 5 abertos).
+
+4. As classes dele implementam (implements):
+a) Serializable: Para poder transportar o objeto em rede ou grava-lo em disco.
+
+b) AppListener: A classe que implementa isto, é justamente a classe principal, indicado em "app.properties" (com.sun.sgs.app.listener= <Pacotes>.ClasseQueImplementaAppListener), ela carrega e manipula todas as outras e constatemente fica escutando (Send, Receive, etc) informado pelo RedDwarf. Equivale a classe que possui o metoto MAIN, só que no caso é o initialize.
+Obs: ela assim como as outras estão dentro do contexto principal do RedDwarf.
+
+c) ManagedObject: São os objetos que sofrem gerenciamento (Podem ter seus valores atualizados).
+
+d) ClientSessionListener: São as classes que funcionam como Threads (Ficam executando e escutando as requisições dos clientes).
+- Não entendi bem a parte das sessões, aparentenemente 1 Cliente pode abrir "N" sessões, mas não tenho certeza disso ainda (Eu pensava que a relação era de 1 para 1, mas pelo visto cria-se um um ClientSessionListener pra gerenciar todas as requisições os cliente (ClientSessionListener 1----* Sessions)). Se alguem puder tirar esta duvida agradeço.
+
+5. Falando de um exemplo que analisei:
+Vi um exemplo de game MUD (sigla de Multi-user dungeon, dimension, ou por vezes domain), onde ele trabalha com conceito de Room, o nome do jogo é "SwordWorld".
+
+-> SwordWorld implements Serializable, AppListener (Classe principal da Aplicação)
+-> SwordWorldObject implements Serializable, ManagedObject (Todos os herdeiros serão objetos gerenciaiveis)
+Obs: Itens, Players, Rooms todos herdam a classe SwordWorldObject
+----> SwordWorldPlayer extends SwordWorldObject implements ClientSessionListener (Fica escutando os clientes)
+----> SwordWorldRoom extends SwordWorldObject (Apenas representa uma room e possui a lista de itens e players da room especifica)
+
+. Local do exemplo:
+..\sgs-server-dist-0.10.2.1\tutorial\src\com\sun\sgs\tutorial\server\swordworld
+..\sgs-server-dist-0.10.2.1\tutorial\conf
+
+6. O "app.properties" possui 4 parametros
+a) com.sun.sgs.app.name=<Nome do Projeto>
+
+b) com.sun.sgs.app.root=<Aparentemente aqui é onde fica o caminho para uns arquivos que não sei para que servem>
+Ex: ..\sgs-server-dist-0.10.2.1\tutorial\data\HelloWorld\dsdb\** ("00000000.jdb", "je.lck")
+- Realmente não sei ainda a função deste parametro.
+
+c) com.sun.sgs.impl.transport.tcp.listen.port=<Porta>
+
+d) com.sun.sgs.app.listener=<Classe que implementa AppListener>
+
+
+7. No projeto Servidor só precisamos desta lib "sgs-server-api-0.10.2.1.jar"
+
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+* No lado Cliente:
+
+1. No projeto Cliente só precisamos desta lib "sgs-client.jar"
+
+2. As classes dele implementam (implements):
+
+a) SimpleClientListener: Classe cliente que fica escutando o servidor (Send, Receive).
+- Ainda não sei se ela abre conexão processa e fecha ou se mantem a conexão aberta até o termino do jogo.E nem sei como usa-las corretamente, se posso encher o cliente com clsses que a implementem ou basta uma, para a monitoração.
+
+=> Não entendi para que serve as interfaces "ClientChannel" e "ClientChannelListener" e nem como e quando usa-las.
+
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+Queremos fazer um Login-Server e Game-Server (Como já existe atualmente via socket no projeto), mas estou ainda com dificuldade para entender como fazer isso no RedDwarf, a principio imaginei criar dois projetos servidores LogiServer e GameServer, e por o Jar de ambos no diretorio Deploy do RedDwarf, para ambos serem inicializados (Acho que isso resolve), mas não posso afirmar. 
