@@ -22,8 +22,7 @@ package game.login;
  */
 
 import game.cassandra.dao.CassandraDAOLogin;
-import game.database.login.vo.Login;
-//import game.systems.WorldMap;
+import game.cassandra.data.Login;
 
 import java.util.Properties;
 import java.util.logging.Logger;
@@ -31,7 +30,6 @@ import java.util.logging.Logger;
 import javax.security.auth.login.AccountNotFoundException;
 import javax.security.auth.login.CredentialException;
 
-import com.sun.sgs.app.ManagedReference;
 import com.sun.sgs.auth.Identity;
 import com.sun.sgs.auth.IdentityAuthenticator;
 import com.sun.sgs.auth.IdentityCredentials;
@@ -56,14 +54,14 @@ public class NamePasswordAuthenticator implements IdentityAuthenticator {
 			.getLogger(NamePasswordAuthenticator.class.getName());
 
 	// add logined user to managedreference
-	private ManagedReference<Login> loginRef = null;
+	//private ManagedReference<Login> loginRef = null;
 
 	public NamePasswordAuthenticator(Properties properties) {
 
 		logger.info("****** Initializing JMMORPG ******");
 		logger.info("++++++ Initializing Authenticator ++++++ ");
 		// is this also can be done in Listener?
-		//new WorldMap();
+		// new WorldMap();
 
 	}
 

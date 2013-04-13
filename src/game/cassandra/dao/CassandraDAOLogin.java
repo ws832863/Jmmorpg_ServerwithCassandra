@@ -10,9 +10,9 @@ import java.util.UUID;
 import java.util.Vector;
 
 import game.cassandra.conn.CassandraConnection;
+import game.cassandra.data.Login;
 import game.cassandra.utils.Utils;
-import game.database.login.vo.Login;
-import game.database.map.vo.Map;
+
 import me.prettyprint.cassandra.model.BasicColumnDefinition;
 import me.prettyprint.cassandra.model.BasicColumnFamilyDefinition;
 import me.prettyprint.cassandra.serializers.StringSerializer;

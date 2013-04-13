@@ -1,7 +1,7 @@
 package game.cassandra.dao;
 
 import game.cassandra.conn.CassandraConnection;
-import game.database.classe.vo.Classe;
+import game.cassandra.data.Classe;
 
 import java.util.Arrays;
 import java.util.HashMap;

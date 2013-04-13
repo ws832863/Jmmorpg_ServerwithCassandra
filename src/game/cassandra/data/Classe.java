@@ -1,4 +1,4 @@
-package game.database.classe.vo;
+package game.cassandra.data;
 
 
 /**

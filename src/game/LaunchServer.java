@@ -4,11 +4,10 @@ import game.cassandra.dao.CassandraDAOClasse;
 import game.cassandra.dao.CassandraDAOMap;
 import game.cassandra.dao.CassandraDAOPlayer;
 import game.cassandra.dao.CassandraDAORace;
-import game.database.classe.vo.Classe;
-import game.database.login.vo.Login;
-import game.database.map.vo.Map;
-import game.database.player.vo.Player;
-import game.database.race.vo.Race;
+import game.cassandra.data.Classe;
+import game.cassandra.data.Map;
+import game.cassandra.data.Player;
+import game.cassandra.data.Race;
 import game.network.ManagerChannelPlayer;
 import game.network.ManagerSessionPlayer;
 import game.systems.Room;
@@ -58,8 +57,6 @@ public class LaunchServer implements AppListener, Serializable {
 	 */
 	private Set<ManagedReference<Channel>> channels = null;
 
-	private Login login;
-
 	/**
 	 * Gets the SwordWorld's One True Room.
 	 * <p>
@@ -97,7 +94,7 @@ public class LaunchServer implements AppListener, Serializable {
 	@Override
 	public void initialize(Properties arg0) {
 		// Create the Room
-		
+
 		this.channels = new HashSet<ManagedReference<Channel>>();
 		this.rooms = new HashSet<ManagedReference<Room>>();
 

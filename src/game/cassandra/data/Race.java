@@ -1,4 +1,4 @@
-package game.database.race.vo;
+package game.cassandra.data;
 
 
 /**

@@ -1,7 +1,7 @@
 package game.network;
 
+import game.cassandra.data.Player;
 import game.core.CoreManagedObjects;
-import game.database.player.vo.Player;
 import game.systems.Room;
 
 import java.io.Serializable;

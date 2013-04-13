@@ -1,4 +1,4 @@
-package game.database.map.vo;
+package game.cassandra.data;
 
 
 /**
