@@ -1,5 +1,6 @@
 package game;
 
+import game.cassandra.conn.CassandraConnection;
 import game.cassandra.dao.CassandraDAOClasse;
 import game.cassandra.dao.CassandraDAOMap;
 import game.cassandra.dao.CassandraDAOPlayer;
@@ -126,6 +127,7 @@ public class LaunchServer implements AppListener, Serializable {
 		}
 
 		logger.info("-- JMMORPG Initialized ---");
+		
 	}
 
 	@Override

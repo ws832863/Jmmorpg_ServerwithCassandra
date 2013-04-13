@@ -27,7 +27,14 @@ import me.prettyprint.hector.api.mutation.Mutator;
 import me.prettyprint.hector.api.query.SliceQuery;
 
 import org.apache.log4j.Logger;
-
+/**
+ * This is the Data access class of a ColumnFamily classe
+ * which stores the classe of a hero
+ * 
+ * CF Classe is a basic column family , stores basic information of a classe
+ * @author wangshuo
+ *
+ */
 public class CassandraDAOClasse {
 
 	private final static Logger logger = Logger
