@@ -128,8 +128,8 @@ public class CassandraDAOLogin {
 
 				}
 
-				logger.info("searching database with " + row.getKey()
-						+ " resultmap= " + tempMap.toString());
+				logger.info("searching database with rowkey :" + row.getKey()
+						+ " get the resultmap = " + tempMap.toString());
 
 				if (tempMap.get("userpassword").equals(password)) {
 					logger.info("user verified");
@@ -239,7 +239,7 @@ public class CassandraDAOLogin {
 		clanIdDef.setName(stringSerializer.toByteBuffer("clainid"));
 		clanIdDef.setValidationClass(ComparatorType.BYTESTYPE.getClassName());
 		// the user name of a account username column has a index, so we can use
-		// Rangeslicequery to retrieve it by setting addequalsexpression
+		// Rangeslicesquery to retrieve it by setting addequalsexpression
 
 		// in the sql database, this colums name is id!!!!!!!!
 		// this column is the secondary index, we can retrive it use

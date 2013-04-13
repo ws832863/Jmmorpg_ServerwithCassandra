@@ -4,11 +4,9 @@ import game.cassandra.dao.CassandraDAOClasse;
 import game.cassandra.dao.CassandraDAOMap;
 import game.cassandra.dao.CassandraDAOPlayer;
 import game.cassandra.dao.CassandraDAORace;
-
 import game.database.classe.vo.Classe;
 import game.database.login.vo.Login;
 import game.database.map.vo.Map;
-
 import game.database.player.vo.Player;
 import game.database.race.vo.Race;
 import game.network.ManagerChannelPlayer;
@@ -18,11 +16,9 @@ import game.systems.Room;
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
-import java.sql.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Properties;
-import java.util.Random;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -38,7 +34,9 @@ import com.sun.sgs.app.Delivery;
 import com.sun.sgs.app.ManagedReference;
 
 /**
+ * 
  * @author Michel Montenegro
+ * @modify shuo wang
  */
 public class LaunchServer implements AppListener, Serializable {
 
@@ -99,7 +97,7 @@ public class LaunchServer implements AppListener, Serializable {
 	@Override
 	public void initialize(Properties arg0) {
 		// Create the Room
-
+		
 		this.channels = new HashSet<ManagedReference<Channel>>();
 		this.rooms = new HashSet<ManagedReference<Room>>();
 

@@ -23,7 +23,7 @@ package game.login;
 
 import game.cassandra.dao.CassandraDAOLogin;
 import game.database.login.vo.Login;
-import game.systems.WorldMap;
+//import game.systems.WorldMap;
 
 import java.util.Properties;
 import java.util.logging.Logger;
@@ -62,8 +62,8 @@ public class NamePasswordAuthenticator implements IdentityAuthenticator {
 
 		logger.info("****** Initializing JMMORPG ******");
 		logger.info("++++++ Initializing Authenticator ++++++ ");
-
-		new WorldMap();
+		// is this also can be done in Listener?
+		//new WorldMap();
 
 	}
 
@@ -99,14 +99,14 @@ public class NamePasswordAuthenticator implements IdentityAuthenticator {
 
 		Login login = null;
 		try {
-			
+
 			dao.selectByLoginPassword(npc.getName(),
 					new String(npc.getPassword()));
-			
-			logger.info("session.getname " + npc.getName() + "pwd "
-					+ npc.getPassword().toString());
 
-			//dao.selectAll();
+			logger.info("the user information received form the client client session.getname "
+					+ npc.getName() + "pwd " + npc.getPassword().toString());
+
+			// dao.selectAll();
 			// dao.SearchingUserUseSecondaryIndexByNameAndPassword(npc.getName(),
 			// new String(npc.getPassword());
 			if (dao.getVos() != null && !dao.getVos().isEmpty()) {
@@ -131,12 +131,12 @@ public class NamePasswordAuthenticator implements IdentityAuthenticator {
 				 * character by doing a slicequery specifying the
 				 * range(username_heroname_0 username_heroname_zzzzzzzzz)
 				 */
-			//	dao.insertUserIntoCassandra(npc.getName(),
-			//			new String(npc.getPassword()), true);
+				// dao.insertUserIntoCassandra(npc.getName(),
+				// new String(npc.getPassword()), true);
 				// the get the created user information from the database
-			//	dao.SearchingUserUseSecondaryIndexByNameAndPassword(
-			//			npc.getName(), new String(npc.getPassword()));
-			//	login = dao.getVos().firstElement();
+				// dao.SearchingUserUseSecondaryIndexByNameAndPassword(
+				// npc.getName(), new String(npc.getPassword()));
+				// login = dao.getVos().firstElement();
 
 			}
 		} catch (Exception e) {
