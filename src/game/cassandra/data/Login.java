@@ -1,20 +1,28 @@
 package game.cassandra.data;
+
+import java.io.Serializable;
 import java.sql.Date;
+
+import com.sun.sgs.app.ManagedObject;
 
 /**
  * 
- * @author Michel Montenegro
+ * @author shuo wang a login is a managedobject. for a player session
  * 
  */
-public class Login  {
+public class Login implements ManagedObject, Serializable {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1391403479074600422L;
 	private int id;
 	private String login;
 	private String user_password;
 	private String accessLevel;
 	private Date dateRegister;
 	private String lastIP;
-	private Date lastactive;	  
+	private Date lastactive;
 	private String userCurrIP;
 	private String lastServer;
 	private String name;
@@ -125,7 +133,6 @@ public class Login  {
 	public void setClanId(int clanId) {
 		this.clanId = clanId;
 	}
-
 
 	@Override
 	public String toString() {

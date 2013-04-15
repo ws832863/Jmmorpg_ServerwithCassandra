@@ -1,6 +1,5 @@
 package game;
 
-import game.cassandra.conn.CassandraConnection;
 import game.cassandra.dao.CassandraDAOClasse;
 import game.cassandra.dao.CassandraDAOMap;
 import game.cassandra.dao.CassandraDAOPlayer;
@@ -9,6 +8,7 @@ import game.cassandra.data.Classe;
 import game.cassandra.data.Map;
 import game.cassandra.data.Player;
 import game.cassandra.data.Race;
+import game.login.TestATask;
 import game.network.ManagerChannelPlayer;
 import game.network.ManagerSessionPlayer;
 import game.systems.Room;
@@ -32,6 +32,7 @@ import com.sun.sgs.app.ClientSessionListener;
 import com.sun.sgs.app.DataManager;
 import com.sun.sgs.app.Delivery;
 import com.sun.sgs.app.ManagedReference;
+import com.sun.sgs.app.TaskManager;
 
 /**
  * 
@@ -127,13 +128,18 @@ public class LaunchServer implements AppListener, Serializable {
 		}
 
 		logger.info("-- JMMORPG Initialized ---");
-		
+
 	}
 
 	@Override
 	public ClientSessionListener loggedIn(ClientSession session) {
 		System.out.println("Login get invoked!!!!!!!!!!!!!!!!!!!!");
 
+		logger.info("schedule task run========login");
+		TaskManager simpleTask = AppContext.getTaskManager();
+		TestATask t = new TestATask(session.getName());
+		// simpleTask.schedulePeriodicTask(t, 500, 500);
+		simpleTask.scheduleTask(t);
 		if (session == null) {
 			System.out.println("null sesseion");
 			// throw new NullPointerException("null session");
