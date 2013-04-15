@@ -4,9 +4,10 @@ import game.cassandra.dao.CassandraDAOGamePlayer;
 import game.cassandra.dao.CassandraDAOMap;
 import game.cassandra.data.GamePlayer;
 import game.cassandra.data.Map;
+import game.darkstar.network.GameChannelsListener;
+import game.darkstar.network.GamePlayerClientSessionListener;
 import game.drakstar.task.TestATask;
-import game.network.ManagerChannelPlayer;
-import game.network.ManagerSessionPlayer;
+
 import game.systems.Room;
 
 import java.io.Serializable;
@@ -97,20 +98,21 @@ public class LaunchServer implements AppListener, Serializable {
 		this.rooms = new HashSet<ManagedReference<Room>>();
 
 		logger.info("initialing rooms-------LaunchServer");
+		
 		CassandraDAOMap dao = new CassandraDAOMap();
 		try {
 			dao.selectAll();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		System.out.println("read daomap sucessfully!!!!");
+		System.out.println("read daomap(environment) sucessfully!!!!");
 		Iterator<Map> it = dao.getVos().iterator();
 		ChannelManager channelMgr = AppContext.getChannelManager();
 		while (it.hasNext()) {
 			System.out.println("it has next" + it.toString());
 			Map map = it.next();
 			Channel c1 = channelMgr.createChannel(("map_" + map.getId()),
-					new ManagerChannelPlayer(), Delivery.RELIABLE);
+					new GameChannelsListener(), Delivery.RELIABLE);
 			ManagedReference<Channel> channel1 = AppContext.getDataManager()
 					.createReference(c1);
 			this.channels.add(channel1);
@@ -120,7 +122,7 @@ public class LaunchServer implements AppListener, Serializable {
 			ManagedReference<Room> r = dataManager.createReference(room);
 			rooms.add(r);
 			System.out.println("map_" + map.getId());
-			System.out.println("Room" + map.getId());
+			System.out.println("Room  " + map.getId());
 		}
 
 		logger.info("-- JMMORPG Initialized ---");
@@ -129,41 +131,30 @@ public class LaunchServer implements AppListener, Serializable {
 
 	@Override
 	public ClientSessionListener loggedIn(ClientSession session) {
-		System.out.println("Login get invoked!!!!!!!!!!!!!!!!!!!!");
+		logger.info("user trys to login in the loginin method be invoked!!");
 
 		logger.info("schedule task run========login");
 		TaskManager simpleTask = AppContext.getTaskManager();
 		TestATask t = new TestATask(session.getName());
-		// simpleTask.schedulePeriodicTask(t, 500, 500);
 		simpleTask.scheduleTask(t);
-		if (session == null) {
-			System.out.println("null sesseion");
-			// throw new NullPointerException("null session");
-			return null;
-		}
+
 		String name = session.getName();
 
 		logger.log(Level.INFO, "JMMORPG Client login: {0}", name);
 
-		// CassandraDAOPlayer dao = new CassandraDAOPlayer();
-		// CassandraDAOClasse daoClasse = new CassandraDAOClasse();
-		// CassandraDAORace daoRace = new CassandraDAORace();
 		CassandraDAOGamePlayer cdgp = new CassandraDAOGamePlayer();
 		CassandraDAOMap daomap = new CassandraDAOMap();
-		// Player player = null;
 		GamePlayer gPlayer = new GamePlayer();
 
 		Map map = null;
 
-		ManagerSessionPlayer SessionPlayer = null;
+		GamePlayerClientSessionListener SessionPlayer = null;
 		try {
-			
-
 			cdgp.selectByLoginName(name);
 
 			if (cdgp.getVos() != null && !cdgp.getVos().isEmpty()) {
-				gPlayer=cdgp.getVos().firstElement();
-			
+				gPlayer = cdgp.getVos().firstElement();
+
 				System.out.println("username >>>>" + gPlayer.getUserName());
 				System.out.println("classe >>>>" + gPlayer.getHeroClass());
 
@@ -173,51 +164,41 @@ public class LaunchServer implements AppListener, Serializable {
 				map = daomap.getVos().firstElement();
 
 				// server send command, client use this command to load player
-				 StringBuilder sbMsg=new StringBuilder();
-				 sbMsg.append("loadPlayer").append("/");
-				 sbMsg.append(gPlayer.getLoginId()).append("/");//player.getId() 
-				 sbMsg.append(gPlayer.getUserName()).append("/");//player.getName() 
-				 sbMsg.append(gPlayer.getLoginId()).append("/");//player.getLoginId()
-				 sbMsg.append(gPlayer.getMapId()).append("/");//player.getMapId()
-				 sbMsg.append(gPlayer.getClassId()).append("/");//player.getClasseId()
-				 sbMsg.append(gPlayer.getMaxHp()).append("/");//player.getHpMax()
-				 sbMsg.append(gPlayer.getCurrHp()).append("/");//player.getHpCurr()
-				 sbMsg.append("10").append("/");//player.getManaMax()
-				 sbMsg.append("10").append("/");//player.getManaCurr()
-				 sbMsg.append(gPlayer.getMaxExp()).append("/");//player.getExpMax() 
-				 sbMsg.append(gPlayer.getCurrExp()).append("/");//player.getExpCurr()
-				 sbMsg.append(gPlayer.getAttack()).append("/");//player.getSp()
-				 sbMsg.append(gPlayer.getStrength()).append("/");//player.getStr() 
-				 sbMsg.append(gPlayer.getDefense()).append("/");//player.getDex()
-				 sbMsg.append("10").append("/");//player.getCon()
-				 sbMsg.append("10").append("/");//player.getInte() 
-				 sbMsg.append("10").append("/");//player.getCha()
-				 sbMsg.append("10").append("/");//player.getWis()
-				 sbMsg.append("10").append("/");//player.getStamina()
-				 sbMsg.append("10").append("/");//player.getSex()
-				 sbMsg.append("10").append("/");//player.getResMagic()
-				 sbMsg.append("10").append("/");//player.getResPhysical()
-				 sbMsg.append("10").append("/");//player.getEvasion()
-				 sbMsg.append(gPlayer.getRegistDate()).append("/");//player.getDateCreate()
-				 sbMsg.append("F").append("/");//player.getOnLine()
-				 sbMsg.append(gPlayer.getLastActiceDate()).append("/");//player.getLastAcess()
-				 sbMsg.append("0").append("/");//player.getSector()
-				 sbMsg.append(gPlayer.getHeroClass()).append("/");//classe.getNameClasse()
-				 sbMsg.append(gPlayer.getHeroRace()).append("/");//race.getRace()
-				 sbMsg.append(map.getStartTileHeroPosX()).append("/");// map.getStartTileHeroPosX()
-				 sbMsg.append(map.getStartTileHeroPosY()).append("/");//map.getStartTileHeroPosY()
-				 sbMsg.append(map.getPosition()).append("/");//map.getPosition()
-				 
-					/*	// Alguns dados da Classe do Personagem
-						+ "/"
-						+ 
-						// Alguns dados da Ra�a do Personagem
-						+ "/"
-						+ 
-						// Posi��o do mapa que deve iniciar
-						+ "/" + map.getStartTileHeroPosX() + "/"
-						+ map.getStartTileHeroPosY() + "/" + map.getPosition()
-						*/
+				StringBuilder sbMsg = new StringBuilder();
+				sbMsg.append("loadPlayer").append("/");
+				sbMsg.append(gPlayer.getLoginId()).append("/");// player.getId()
+				sbMsg.append(gPlayer.getUserName()).append("/");// player.getName()
+				sbMsg.append(gPlayer.getLoginId()).append("/");// player.getLoginId()
+				sbMsg.append(gPlayer.getMapId()).append("/");// player.getMapId()
+				sbMsg.append(gPlayer.getClassId()).append("/");// player.getClasseId()
+				sbMsg.append(gPlayer.getMaxHp()).append("/");// player.getHpMax()
+				sbMsg.append(gPlayer.getCurrHp()).append("/");// player.getHpCurr()
+				sbMsg.append("10").append("/");// player.getManaMax()
+				sbMsg.append("10").append("/");// player.getManaCurr()
+				sbMsg.append(gPlayer.getMaxExp()).append("/");// player.getExpMax()
+				sbMsg.append(gPlayer.getCurrExp()).append("/");// player.getExpCurr()
+				sbMsg.append(gPlayer.getAttack()).append("/");// player.getSp()
+				sbMsg.append(gPlayer.getStrength()).append("/");// player.getStr()
+				sbMsg.append(gPlayer.getDefense()).append("/");// player.getDex()
+				sbMsg.append("10").append("/");// player.getCon()
+				sbMsg.append("10").append("/");// player.getInte()
+				sbMsg.append("10").append("/");// player.getCha()
+				sbMsg.append("10").append("/");// player.getWis()
+				sbMsg.append("10").append("/");// player.getStamina()
+				sbMsg.append("10").append("/");// player.getSex()
+				sbMsg.append("10").append("/");// player.getResMagic()
+				sbMsg.append("10").append("/");// player.getResPhysical()
+				sbMsg.append("10").append("/");// player.getEvasion()
+				sbMsg.append(gPlayer.getRegistDate()).append("/");// player.getDateCreate()
+				sbMsg.append("F").append("/");// player.getOnLine()
+				sbMsg.append(gPlayer.getLastActiceDate()).append("/");// player.getLastAcess()
+				sbMsg.append("0").append("/");// player.getSector()
+				sbMsg.append(gPlayer.getHeroClass()).append("/");// classe.getNameClasse()
+				sbMsg.append(gPlayer.getHeroRace()).append("/");// race.getRace()
+				sbMsg.append(map.getStartTileHeroPosX()).append("/");// map.getStartTileHeroPosX()
+				sbMsg.append(map.getStartTileHeroPosY()).append("/");// map.getStartTileHeroPosY()
+				sbMsg.append(map.getPosition()).append("/");// map.getPosition()
+
 				System.out.println(sbMsg.toString());
 				session.send(encodeString(sbMsg.toString()));
 				// Envio um aviso a todos os players deste canal que este player
@@ -227,17 +208,19 @@ public class LaunchServer implements AppListener, Serializable {
 				channel.send(
 						null,
 						encodeString("m/" + gPlayer.getLoginId() + "/"
-								+ gPlayer.getClassId() + "/" + gPlayer.getUserName()
-								+ "/" + map.getStartTileHeroPosX() + "/"
+								+ gPlayer.getClassId() + "/"
+								+ gPlayer.getUserName() + "/"
+								+ map.getStartTileHeroPosX() + "/"
 								+ map.getStartTileHeroPosY() + "/"
 								+ map.getPosition() + "/"));
 
 				// Cria um canal e adiciona no vetor
-				SessionPlayer = ManagerSessionPlayer.loggedIn(session);
+				SessionPlayer = GamePlayerClientSessionListener
+						.loggedIn(session);
 
 				// Put player in room
-				SessionPlayer
-						.enter(getRoom("Room" + gPlayer.getMapId()), gPlayer);
+				SessionPlayer.enter(getRoom("Room" + gPlayer.getMapId()),
+						gPlayer);
 
 				// add this player to our channel
 				AppContext.getChannelManager()

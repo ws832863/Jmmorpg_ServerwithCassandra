@@ -131,7 +131,7 @@ public class CassandraDAOGamePlayer {
 
 	}
 
-	public void selectByLoginPassword(String username, String password) {
+	public boolean selectByLoginPassword(String username, String password) {
 		vos.removeAllElements();
 		int row_count = 10;
 		boolean userverified = false;
@@ -172,19 +172,22 @@ public class CassandraDAOGamePlayer {
 				if (tempMap.get("userpassword").equals(password)) {
 					logger.info("user verified");
 					userverified = true;
-					vos.add(this.mappingHashMapIntoGamePlayerObject(
-							row.getKey(), tempMap));
+					// vos.add(this.mappingHashMapIntoGamePlayerObject(
+					// row.getKey(), tempMap));
 
 				}
 			}
 			if (!userverified) {
 
 				System.out.println("User gives Wrong Password");
+				userverified = false;
 			}
 
 		} else {// no result returnd
 			System.out.println("No User was found in Cassandra");
+			userverified = false;
 		}
+		return userverified;
 	}
 
 	public void selectAll() {

@@ -20,9 +20,9 @@
  */
 
 package game.systems;
- 
+
 import game.core.CoreManagedObjects;
-import game.network.ManagerSessionPlayer;
+import game.darkstar.network.GamePlayerClientSessionListener;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
@@ -40,181 +40,176 @@ import com.sun.sgs.app.DataManager;
 import com.sun.sgs.app.ManagedReference;
 
 /**
- * Cada região do mapa sera representada por uma Room,
- * os players só vão interagir com os players da mesma room,
- * futuramente havera interação global
- *  
- * @author Michel Montenegro
- * Represents a room in the {@link JMMORPG} example MUD.
+ * Cada regiï¿½o do mapa sera representada por uma Room, os players sï¿½ vï¿½o
+ * interagir com os players da mesma room, futuramente havera interaï¿½ï¿½o global
+ * 
+ * @author Michel Montenegro Represents a room in the {@link JMMORPG} example
+ *         MUD.
  */
-public class Room extends CoreManagedObjects
-{
-    /** The version of the serialized form of this class. */
+public class Room extends CoreManagedObjects {
+	/** The version of the serialized form of this class. */
 	private static final long serialVersionUID = 3886351480109103254L;
 
 	/** The {@link Logger} for this class. */
-    private static final Logger logger =
-        Logger.getLogger(Room.class.getName());
+	private static final Logger logger = Logger.getLogger(Room.class.getName());
 
-    /** The set of players in this room. */
-    private final Set<ManagedReference<ManagerSessionPlayer>> players =
-        new HashSet<ManagedReference<ManagerSessionPlayer>>();
-    
-    /** The message encoding. */
-    public static final String MESSAGE_CHARSET = "UTF-8";
+	/** The set of players in this room. */
+	private final Set<ManagedReference<GamePlayerClientSessionListener>> players = new HashSet<ManagedReference<GamePlayerClientSessionListener>>();
 
-    /**
-     * Creates a new room with the given name and description, initially
-     * empty of items and players.
-     *
-     * @param name the name of this room
-     * @param description a description of this room
-     */
-    public Room(String name, String description) {
-        super(name, description);
-    }
+	/** The message encoding. */
+	public static final String MESSAGE_CHARSET = "UTF-8";
 
-    /**
-     * Adds a player to this room.
-     *
-     * @param managerPlayers the player to add
-     * @return {@code true} if the player was added to the room
-     */
-    public boolean addPlayerSession(ManagerSessionPlayer player) {
-        logger.log(Level.INFO, "{0} enters {1}",
-            new Object[] { player, this });
-
-        DataManager dataManager = AppContext.getDataManager();
-        dataManager.markForUpdate(this);
-
-        return players.add(dataManager.createReference(player));
-    }
-
-    /**
-     * Removes a player from this room.
-     *
-     * @param player the player to remove
-     * @return {@code true} if the player was in the room
-     */
-    public boolean removePlayer(ManagerSessionPlayer player) {
-        logger.log(Level.INFO, "{0} leaves {1}",
-            new Object[] { player, this });
-
-        DataManager dataManager = AppContext.getDataManager();
-        dataManager.markForUpdate(this);
-
-        return players.remove(dataManager.createReference(player));
-    }
-    
-    public String showPlayersPositions(ManagerSessionPlayer player) {
-        logger.log(Level.INFO, "{0} sypl {1}",
-                new Object[] { player, this });    	
-    	 
-        String output = "";
-    	 
-
-        List<ManagerSessionPlayer> otherPlayers =
-            getPlayersExcluding(player);
-        Iterator<ManagerSessionPlayer> it = otherPlayers.iterator();
-        while (it.hasNext()){
-        	ManagerSessionPlayer p = it.next();
-        	output += "2/"+p.getTempPosX()+"/"+p.getTempPosY()+"-";
-        }
-
-            return output.toString();
+	/**
+	 * Creates a new room with the given name and description, initially empty
+	 * of items and players.
+	 * 
+	 * @param name
+	 *            the name of this room
+	 * @param description
+	 *            a description of this room
+	 */
+	public Room(String name, String description) {
+		super(name, description);
 	}
 
-    /**
-     * Returns a description of what the given player sees in this room.
-     *
-     * @param looker the player looking in this room
-     * @return a description of what the given player sees in this room
-     */
-    public String look(ManagerSessionPlayer lookerPlayer) {
-        logger.log(Level.INFO, "{0} looks at {1}",
-            new Object[] { lookerPlayer, this });
+	/**
+	 * Adds a player to this room.
+	 * 
+	 * @param managerPlayers
+	 *            the player to add
+	 * @return {@code true} if the player was added to the room
+	 */
+	public boolean addPlayerSession(GamePlayerClientSessionListener player) {
+		logger.log(Level.INFO, "{0} enters {1}", new Object[] { player, this });
 
-        StringBuilder output = new StringBuilder();
-        output.append("You are in ").append(getObjectDescription()).append(".\n");
+		DataManager dataManager = AppContext.getDataManager();
+		dataManager.markForUpdate(this);
 
-        List<ManagerSessionPlayer> otherPlayers =
-            getPlayersExcluding(lookerPlayer);
+		return players.add(dataManager.createReference(player));
+	}
 
-        if (!otherPlayers.isEmpty()) {
-            output.append("Also in here are ");
-            appendPrettyList(output, otherPlayers);
-            output.append(".\n");
-        }
+	/**
+	 * Removes a player from this room.
+	 * 
+	 * @param player
+	 *            the player to remove
+	 * @return {@code true} if the player was in the room
+	 */
+	public boolean removePlayer(GamePlayerClientSessionListener player) {
+		logger.log(Level.INFO, "{0} leaves {1}", new Object[] { player, this });
 
-        return output.toString();
-    }
+		DataManager dataManager = AppContext.getDataManager();
+		dataManager.markForUpdate(this);
 
-    protected static ByteBuffer encodeString(String s) {
-        try {
-            return ByteBuffer.wrap(s.getBytes(MESSAGE_CHARSET));
-        } catch (UnsupportedEncodingException e) {
-            throw new Error("Required character set " + MESSAGE_CHARSET +
-                " not found", e);
-        }
-    }
-    
-    /**
-     * Appends the names of the {@code SwordWorldObject}s in the list
-     * to the builder, separated by commas, with an "and" before the final
-     * item.
-     *
-     * @param builder the {@code StringBuilder} to append to
-     * @param list the list of items to format
-     */
-    private void appendPrettyList(StringBuilder builder,
-        List<? extends CoreManagedObjects> list)
-    {
-        if (list.isEmpty()) {
-            return;
-        }
+		return players.remove(dataManager.createReference(player));
+	}
 
-        int lastIndex = list.size() - 1;
-        CoreManagedObjects last = list.get(lastIndex);
+	public String showPlayersPositions(GamePlayerClientSessionListener player) {
+		logger.log(Level.INFO, "{0} sypl {1}", new Object[] { player, this });
 
-        Iterator<? extends CoreManagedObjects> it =
-            list.subList(0, lastIndex).iterator();
-        if (it.hasNext()) {
-        	CoreManagedObjects other = it.next();
-            builder.append(other.getObjectName());
-            while (it.hasNext()) {
-                other = it.next();
-                builder.append(" ,");
-                builder.append(other.getObjectName());
-            }
-            builder.append(" and ");
-        }
-        builder.append(last.getObjectName());
-    }
+		String output = "";
 
-    /**
-     * Returns a list of players in this room excluding the given
-     * player.
-     *
-     * @param player the player to exclude
-     * @return the list of players
-     */
-    private List<ManagerSessionPlayer>
-            getPlayersExcluding(ManagerSessionPlayer player)
-    {
-        if (players.isEmpty()) {
-            return Collections.emptyList();
-        }
+		List<GamePlayerClientSessionListener> otherPlayers = getPlayersExcluding(player);
+		Iterator<GamePlayerClientSessionListener> it = otherPlayers.iterator();
+		while (it.hasNext()) {
+			GamePlayerClientSessionListener p = it.next();
+			output += "2/" + p.getTempPosX() + "/" + p.getTempPosY() + "-";
+		}
 
-        ArrayList<ManagerSessionPlayer> otherPlayers =
-            new ArrayList<ManagerSessionPlayer>(players.size());
+		return output.toString();
+	}
 
-        for (ManagedReference<ManagerSessionPlayer> playerRef : players) {
-        	ManagerSessionPlayer other = playerRef.get();
-            if (!player.equals(other)) {
-                otherPlayers.add(other);
-            }
-        }
+	/**
+	 * Returns a description of what the given player sees in this room.
+	 * 
+	 * @param looker
+	 *            the player looking in this room
+	 * @return a description of what the given player sees in this room
+	 */
+	public String look(GamePlayerClientSessionListener lookerPlayer) {
+		logger.log(Level.INFO, "{0} looks at {1}", new Object[] { lookerPlayer,
+				this });
 
-        return Collections.unmodifiableList(otherPlayers);
-    }
+		StringBuilder output = new StringBuilder();
+		output.append("You are in ").append(getObjectDescription())
+				.append(".\n");
+
+		List<GamePlayerClientSessionListener> otherPlayers = getPlayersExcluding(lookerPlayer);
+
+		if (!otherPlayers.isEmpty()) {
+			output.append("Also in here are ");
+			appendPrettyList(output, otherPlayers);
+			output.append(".\n");
+		}
+
+		return output.toString();
+	}
+
+	protected static ByteBuffer encodeString(String s) {
+		try {
+			return ByteBuffer.wrap(s.getBytes(MESSAGE_CHARSET));
+		} catch (UnsupportedEncodingException e) {
+			throw new Error("Required character set " + MESSAGE_CHARSET
+					+ " not found", e);
+		}
+	}
+
+	/**
+	 * Appends the names of the {@code SwordWorldObject}s in the list to the
+	 * builder, separated by commas, with an "and" before the final item.
+	 * 
+	 * @param builder
+	 *            the {@code StringBuilder} to append to
+	 * @param list
+	 *            the list of items to format
+	 */
+	private void appendPrettyList(StringBuilder builder,
+			List<? extends CoreManagedObjects> list) {
+		if (list.isEmpty()) {
+			return;
+		}
+
+		int lastIndex = list.size() - 1;
+		CoreManagedObjects last = list.get(lastIndex);
+
+		Iterator<? extends CoreManagedObjects> it = list.subList(0, lastIndex)
+				.iterator();
+		if (it.hasNext()) {
+			CoreManagedObjects other = it.next();
+			builder.append(other.getObjectName());
+			while (it.hasNext()) {
+				other = it.next();
+				builder.append(" ,");
+				builder.append(other.getObjectName());
+			}
+			builder.append(" and ");
+		}
+		builder.append(last.getObjectName());
+	}
+
+	/**
+	 * Returns a list of players in this room excluding the given player.
+	 * 
+	 * @param player
+	 *            the player to exclude
+	 * @return the list of players
+	 */
+	private List<GamePlayerClientSessionListener> getPlayersExcluding(
+			GamePlayerClientSessionListener player) {
+		if (players.isEmpty()) {
+			return Collections.emptyList();
+		}
+
+		ArrayList<GamePlayerClientSessionListener> otherPlayers = new ArrayList<GamePlayerClientSessionListener>(
+				players.size());
+
+		for (ManagedReference<GamePlayerClientSessionListener> playerRef : players) {
+			GamePlayerClientSessionListener other = playerRef.get();
+			if (!player.equals(other)) {
+				otherPlayers.add(other);
+			}
+		}
+
+		return Collections.unmodifiableList(otherPlayers);
+	}
 }

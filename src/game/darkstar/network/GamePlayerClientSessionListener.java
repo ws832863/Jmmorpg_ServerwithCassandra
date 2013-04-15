@@ -1,4 +1,4 @@
-package game.network;
+package game.darkstar.network;
 
 import game.cassandra.data.GamePlayer;
 import game.core.CoreManagedObjects;
@@ -20,16 +20,16 @@ import com.sun.sgs.app.NameNotBoundException;
 
 /**
  * 
- * @author Michel Montenegro
+ * @author Shuo Wang
  * 
  */
-public class ManagerSessionPlayer extends CoreManagedObjects implements
-		Serializable, ClientSessionListener {
+public class GamePlayerClientSessionListener extends CoreManagedObjects
+		implements Serializable, ClientSessionListener {
 
 	private static final long serialVersionUID = -6143746028573880418L;
 
 	private static final Logger logger = Logger
-			.getLogger(ManagerSessionPlayer.class.getName());
+			.getLogger(GamePlayerClientSessionListener.class.getName());
 
 	/** The message encoding. */
 	public static final String MESSAGE_CHARSET = "UTF-8";
@@ -46,6 +46,25 @@ public class ManagerSessionPlayer extends CoreManagedObjects implements
 	private ManagedReference<GamePlayer> playerRef = null;
 
 	/**
+	 * Creates a new {@code Player} with the given name.
+	 * 
+	 * @param name
+	 *            the name of this player
+	 */
+	public GamePlayerClientSessionListener(String objetcName,
+			String objectDescription) {
+		super(objetcName, objectDescription);
+	}
+
+	public ManagedReference<GamePlayer> getPlayerRef() {
+		return playerRef;
+	}
+
+	public void setPlayerRef(ManagedReference<GamePlayer> playerRef) {
+		this.playerRef = playerRef;
+	}
+
+	/**
 	 * Find or create the player object for the given session, and mark the
 	 * player as logged in on that session.
 	 * 
@@ -53,18 +72,19 @@ public class ManagerSessionPlayer extends CoreManagedObjects implements
 	 *            which session to find or create a player for
 	 * @return a player for the given session
 	 */
-	public static ManagerSessionPlayer loggedIn(ClientSession session) {
+	public static GamePlayerClientSessionListener loggedIn(ClientSession session) {
 		String playerBinding = PLAYER_BIND_PREFIX + session.getName();
 
 		// try to find player object, if non existent then create
 		DataManager dataMgr = AppContext.getDataManager();
-		ManagerSessionPlayer player;
+		GamePlayerClientSessionListener player;
 
 		try {
-			player = (ManagerSessionPlayer) dataMgr.getBinding(playerBinding);
+			player = (GamePlayerClientSessionListener) dataMgr
+					.getBinding(playerBinding);
 		} catch (NameNotBoundException ex) {
 			// this is a new player
-			player = new ManagerSessionPlayer(playerBinding, "");
+			player = new GamePlayerClientSessionListener(playerBinding, "");
 			logger.log(Level.INFO, "New player created: {0}", player);
 			dataMgr.setBinding(playerBinding, player);
 
@@ -272,21 +292,4 @@ public class ManagerSessionPlayer extends CoreManagedObjects implements
 		this.tempPosY = tempPosY;
 	}
 
-	/**
-	 * Creates a new {@code Player} with the given name.
-	 * 
-	 * @param name
-	 *            the name of this player
-	 */
-	public ManagerSessionPlayer(String objetcName, String objectDescription) {
-		super(objetcName, objectDescription);
-	}
-
-	public ManagedReference<GamePlayer> getPlayerRef() {
-		return playerRef;
-	}
-
-	public void setPlayerRef(ManagedReference<GamePlayer> playerRef) {
-		this.playerRef = playerRef;
-	}
 }

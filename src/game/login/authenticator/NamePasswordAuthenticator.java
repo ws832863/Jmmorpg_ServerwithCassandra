@@ -1,4 +1,4 @@
-package game.login;
+package game.login.authenticator;
 
 /*
  * Copyright 2007-2010 Sun Microsystems, Inc.
@@ -22,7 +22,6 @@ package game.login;
  */
 
 import game.cassandra.dao.CassandraDAOGamePlayer;
-import game.cassandra.data.GamePlayer;
 
 import java.util.Properties;
 import java.util.logging.Logger;
@@ -53,16 +52,10 @@ public class NamePasswordAuthenticator implements IdentityAuthenticator {
 	private static final Logger logger = Logger
 			.getLogger(NamePasswordAuthenticator.class.getName());
 
-	// add logined user to managedreference
-	//private ManagedReference<Login> loginRef = null;
-
 	public NamePasswordAuthenticator(Properties properties) {
-
-		logger.info("****** Initializing JMMORPG ******");
-		logger.info("++++++ Initializing Authenticator ++++++ ");
-		// is this also can be done in Listener?
-		// new WorldMap();
-
+		System.out.println(properties.size());
+		
+	
 	}
 
 	/**
@@ -91,42 +84,28 @@ public class NamePasswordAuthenticator implements IdentityAuthenticator {
 		 * and give the user a default hero with random hero class
 		 */
 
-		// DAOLogin dao = new DAOLogin();
-
 		CassandraDAOGamePlayer dao = new CassandraDAOGamePlayer();
 
-		GamePlayer login = null;
-		try {
+		boolean flag = dao.selectByLoginPassword(npc.getName(),
+				new String(npc.getPassword()));
 
-			dao.selectByLoginPassword(npc.getName(),
-					new String(npc.getPassword()));
+		logger.info("the user information received form the client client session.getname "
+				+ npc.getName() + "pwd " + npc.getPassword().toString());
 
-			logger.info("the user information received form the client client session.getname "
-					+ npc.getName() + "pwd " + npc.getPassword().toString());
+		if (flag) {
+			System.out
+					.println("a user attempting to login, find user in the database "
+							+ npc.getName());
+			return new IdentityImpl(npc.getName());
 
-			// dao.selectAll();
-			// dao.SearchingUserUseSecondaryIndexByNameAndPassword(npc.getName(),
-			// new String(npc.getPassword());
-			if (dao.getVos() != null && !dao.getVos().isEmpty()) {
-				login = dao.getVos().firstElement();
+		} else {// the provide name and password not exists,create a new
+				// account added by shuowang 2013 4.8
+			System.out
+					.println("User provide a name and password not in database, create it ");
 
-				System.out
-						.println("a user attempting to login, find user in the database "
-								+ login.getUserName());
-			} else {// the provide name and password not exists,create a new
-					// account added by shuowang 2013 4.8
-				System.out
-						.println("User provide a name and password not in database, create it ");
-
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
-		if (login == null) {
 			return null;
+
 		}
 
-		return new IdentityImpl(npc.getName());
 	}
 }

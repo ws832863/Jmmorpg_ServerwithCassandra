@@ -1,14 +1,10 @@
-package game.network;
-
-//import game.systems.MapWorld;
-//import game.systems.WorldMap;
-
-import java.io.Serializable;
-import java.io.UnsupportedEncodingException;
-import java.nio.ByteBuffer;
-import java.util.logging.Logger;
+package game.darkstar.network;
 
 import game.systems.MessageHandler;
+
+import java.io.Serializable;
+import java.nio.ByteBuffer;
+
 import com.sun.sgs.app.Channel;
 import com.sun.sgs.app.ChannelListener;
 import com.sun.sgs.app.ClientSession;
@@ -19,7 +15,7 @@ import com.sun.sgs.app.ClientSession;
  * @author parallels
  * 
  */
-public class ManagerChannelPlayer implements Serializable, ChannelListener {
+public class GameChannelsListener implements Serializable, ChannelListener {
 
 	private static final long serialVersionUID = 8421775775445048325L;
 

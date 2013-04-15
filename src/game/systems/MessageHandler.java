@@ -28,7 +28,8 @@ public class MessageHandler {
 		channel = cnl;
 		clientSession = session;
 		String decodeMsg = decodeString(message);
-		System.out.println("a message from client  " + decodeMsg);
+		System.out.println("a message from client  " + decodeMsg
+				+ "on channel " + cnl.getName());
 		String msg[] = decodeMsg.split("/");
 
 		if (msg[0].toLowerCase().equals("chat")) {
@@ -49,7 +50,7 @@ public class MessageHandler {
 			sb.append(s);
 			sb.append("/");
 		}
-		logger.info("Handle a Chat Message" + sb.toString());
+		logger.info("Handle a <Chat> Message  " + sb.toString());
 		channel.send(clientSession, encodeString(sb.toString()));
 	}
 
@@ -59,7 +60,7 @@ public class MessageHandler {
 			sb.append(s);
 			sb.append("/");
 		}
-		logger.info("Handle a move Message" + sb.toString());
+		logger.info("Handle a <move> Message" + sb.toString());
 		channel.send(clientSession, encodeString(sb.toString()));
 
 	}
