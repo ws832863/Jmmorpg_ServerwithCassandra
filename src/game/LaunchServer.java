@@ -1,14 +1,10 @@
 package game;
 
-import game.cassandra.dao.CassandraDAOClasse;
+import game.cassandra.dao.CassandraDAOGamePlayer;
 import game.cassandra.dao.CassandraDAOMap;
-import game.cassandra.dao.CassandraDAOPlayer;
-import game.cassandra.dao.CassandraDAORace;
-import game.cassandra.data.Classe;
+import game.cassandra.data.GamePlayer;
 import game.cassandra.data.Map;
-import game.cassandra.data.Player;
-import game.cassandra.data.Race;
-import game.login.TestATask;
+import game.drakstar.task.TestATask;
 import game.network.ManagerChannelPlayer;
 import game.network.ManagerSessionPlayer;
 import game.systems.Room;
@@ -36,8 +32,8 @@ import com.sun.sgs.app.TaskManager;
 
 /**
  * 
- * @author Michel Montenegro
- * @modify shuo wang
+ * @author shuo wang
+ * 
  */
 public class LaunchServer implements AppListener, Serializable {
 
@@ -149,81 +145,89 @@ public class LaunchServer implements AppListener, Serializable {
 
 		logger.log(Level.INFO, "JMMORPG Client login: {0}", name);
 
-		CassandraDAOPlayer dao = new CassandraDAOPlayer();
-		CassandraDAOClasse daoClasse = new CassandraDAOClasse();
-		CassandraDAORace daoRace = new CassandraDAORace();
+		// CassandraDAOPlayer dao = new CassandraDAOPlayer();
+		// CassandraDAOClasse daoClasse = new CassandraDAOClasse();
+		// CassandraDAORace daoRace = new CassandraDAORace();
+		CassandraDAOGamePlayer cdgp = new CassandraDAOGamePlayer();
 		CassandraDAOMap daomap = new CassandraDAOMap();
-		Player player = null;
+		// Player player = null;
+		GamePlayer gPlayer = new GamePlayer();
+
 		Map map = null;
 
 		ManagerSessionPlayer SessionPlayer = null;
 		try {
-			// System.out.println("select " + name + " from database");
-			//
-			dao.selectByLoginName(name);
+			
 
-			// // if (dao.getVos() != null && !dao.getVos().isEmpty()) {
-			// if (dao.getVos() == null || dao.getVos().isEmpty()) {
-			// System.out.println("not find  " + name
-			// + "from database,create it");
-			//
-			// // dao.createDefaultPlayer(session);
-			// // dao.selectByLogin(name);
-			// System.out.println("create " + name + " sucessful");
+			cdgp.selectByLoginName(name);
 
-			// } else {
-			if (dao.getVos() != null && !dao.getVos().isEmpty()) {
-				player = dao.getVos().firstElement();
-				System.out.println(">>>>" + player.getName());
+			if (cdgp.getVos() != null && !cdgp.getVos().isEmpty()) {
+				gPlayer=cdgp.getVos().firstElement();
+			
+				System.out.println("username >>>>" + gPlayer.getUserName());
+				System.out.println("classe >>>>" + gPlayer.getHeroClass());
 
-				daoClasse.selectByPk(player.getClasseId());
-				Classe classe = daoClasse.getVos().firstElement();
-				System.out.println(">>>>" + classe.getNameClasse());
+				System.out.println("Race >>>>" + gPlayer.getHeroRace());
 
-				daoRace.selectByPk(classe.getRaceId());
-				Race race = daoRace.getVos().firstElement();
-				System.out.println(">>>>" + race.getRace());
-
-				daomap.selectByPk(player.getMapId());
+				daomap.selectByPk(gPlayer.getMapId());
 				map = daomap.getVos().firstElement();
 
-				// server send command, client use this command to loada player
-				String msg = "loadPlayer" + "/" + player.getId() + "/"
-						+ player.getName() + "/" + player.getLoginId() + "/"
-						+ player.getMapId() + "/" + player.getClasseId() + "/"
-						+ player.getHpMax() + "/" + player.getHpCurr() + "/"
-						+ player.getManaMax() + "/" + player.getManaCurr()
-						+ "/" + player.getExpMax() + "/" + player.getExpCurr()
-						+ "/" + player.getSp() + "/" + player.getStr() + "/"
-						+ player.getDex() + "/" + player.getInte() + "/"
-						+ player.getCon() + "/" + player.getCha() + "/"
-						+ player.getWis() + "/" + player.getStamina() + "/"
-						+ player.getSex() + "/" + player.getResMagic() + "/"
-						+ player.getResPhysical() + "/" + player.getEvasion()
-						+ "/" + player.getDateCreate() + "/"
-						+ player.getOnLine() + "/" + player.getLastAcess()
+				// server send command, client use this command to load player
+				 StringBuilder sbMsg=new StringBuilder();
+				 sbMsg.append("loadPlayer").append("/");
+				 sbMsg.append(gPlayer.getLoginId()).append("/");//player.getId() 
+				 sbMsg.append(gPlayer.getUserName()).append("/");//player.getName() 
+				 sbMsg.append(gPlayer.getLoginId()).append("/");//player.getLoginId()
+				 sbMsg.append(gPlayer.getMapId()).append("/");//player.getMapId()
+				 sbMsg.append(gPlayer.getClassId()).append("/");//player.getClasseId()
+				 sbMsg.append(gPlayer.getMaxHp()).append("/");//player.getHpMax()
+				 sbMsg.append(gPlayer.getCurrHp()).append("/");//player.getHpCurr()
+				 sbMsg.append("10").append("/");//player.getManaMax()
+				 sbMsg.append("10").append("/");//player.getManaCurr()
+				 sbMsg.append(gPlayer.getMaxExp()).append("/");//player.getExpMax() 
+				 sbMsg.append(gPlayer.getCurrExp()).append("/");//player.getExpCurr()
+				 sbMsg.append(gPlayer.getAttack()).append("/");//player.getSp()
+				 sbMsg.append(gPlayer.getStrength()).append("/");//player.getStr() 
+				 sbMsg.append(gPlayer.getDefense()).append("/");//player.getDex()
+				 sbMsg.append("10").append("/");//player.getCon()
+				 sbMsg.append("10").append("/");//player.getInte() 
+				 sbMsg.append("10").append("/");//player.getCha()
+				 sbMsg.append("10").append("/");//player.getWis()
+				 sbMsg.append("10").append("/");//player.getStamina()
+				 sbMsg.append("10").append("/");//player.getSex()
+				 sbMsg.append("10").append("/");//player.getResMagic()
+				 sbMsg.append("10").append("/");//player.getResPhysical()
+				 sbMsg.append("10").append("/");//player.getEvasion()
+				 sbMsg.append(gPlayer.getRegistDate()).append("/");//player.getDateCreate()
+				 sbMsg.append("F").append("/");//player.getOnLine()
+				 sbMsg.append(gPlayer.getLastActiceDate()).append("/");//player.getLastAcess()
+				 sbMsg.append("0").append("/");//player.getSector()
+				 sbMsg.append(gPlayer.getHeroClass()).append("/");//classe.getNameClasse()
+				 sbMsg.append(gPlayer.getHeroRace()).append("/");//race.getRace()
+				 sbMsg.append(map.getStartTileHeroPosX()).append("/");// map.getStartTileHeroPosX()
+				 sbMsg.append(map.getStartTileHeroPosY()).append("/");//map.getStartTileHeroPosY()
+				 sbMsg.append(map.getPosition()).append("/");//map.getPosition()
+				 
+					/*	// Alguns dados da Classe do Personagem
 						+ "/"
-						+ player.getSector()
-						// Alguns dados da Classe do Personagem
-						+ "/"
-						+ classe.getNameClasse()
+						+ 
 						// Alguns dados da Ra�a do Personagem
 						+ "/"
-						+ race.getRace()
+						+ 
 						// Posi��o do mapa que deve iniciar
 						+ "/" + map.getStartTileHeroPosX() + "/"
 						+ map.getStartTileHeroPosY() + "/" + map.getPosition()
-						+ "/";
-				System.out.println(msg);
-				session.send(encodeString(msg));
+						*/
+				System.out.println(sbMsg.toString());
+				session.send(encodeString(sbMsg.toString()));
 				// Envio um aviso a todos os players deste canal que este player
 				// deslogou
 				Channel channel = AppContext.getChannelManager().getChannel(
-						"map_" + player.getMapId());
+						"map_" + gPlayer.getMapId());
 				channel.send(
 						null,
-						encodeString("m/" + player.getLoginId() + "/"
-								+ player.getClasseId() + "/" + player.getName()
+						encodeString("m/" + gPlayer.getLoginId() + "/"
+								+ gPlayer.getClassId() + "/" + gPlayer.getUserName()
 								+ "/" + map.getStartTileHeroPosX() + "/"
 								+ map.getStartTileHeroPosY() + "/"
 								+ map.getPosition() + "/"));
@@ -233,11 +237,11 @@ public class LaunchServer implements AppListener, Serializable {
 
 				// Put player in room
 				SessionPlayer
-						.enter(getRoom("Room" + player.getMapId()), player);
+						.enter(getRoom("Room" + gPlayer.getMapId()), gPlayer);
 
 				// add this player to our channel
 				AppContext.getChannelManager()
-						.getChannel("map_" + player.getMapId()).join(session);
+						.getChannel("map_" + gPlayer.getMapId()).join(session);
 
 			}
 		} catch (Exception e) {

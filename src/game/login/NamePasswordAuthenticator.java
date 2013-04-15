@@ -21,8 +21,8 @@ package game.login;
  * --
  */
 
-import game.cassandra.dao.CassandraDAOLogin;
-import game.cassandra.data.Login;
+import game.cassandra.dao.CassandraDAOGamePlayer;
+import game.cassandra.data.GamePlayer;
 
 import java.util.Properties;
 import java.util.logging.Logger;
@@ -93,9 +93,9 @@ public class NamePasswordAuthenticator implements IdentityAuthenticator {
 
 		// DAOLogin dao = new DAOLogin();
 
-		CassandraDAOLogin dao = new CassandraDAOLogin();
+		CassandraDAOGamePlayer dao = new CassandraDAOGamePlayer();
 
-		Login login = null;
+		GamePlayer login = null;
 		try {
 
 			dao.selectByLoginPassword(npc.getName(),
@@ -112,29 +112,11 @@ public class NamePasswordAuthenticator implements IdentityAuthenticator {
 
 				System.out
 						.println("a user attempting to login, find user in the database "
-								+ login.getName());
+								+ login.getUserName());
 			} else {// the provide name and password not exists,create a new
 					// account added by shuowang 2013 4.8
 				System.out
 						.println("User provide a name and password not in database, create it ");
-				/*
-				 * wangshuo wrote 2013 4 10
-				 * 
-				 * create a user game account and meanwhile create a default
-				 * hero with random race for the user true say that we will
-				 * create a hero for the user, hero name is username in
-				 * cassandra, the hero will store as long user account in
-				 * following form username_heroname_xx xx ist the hero 's
-				 * charactor , e.c attack ,we can get certain users play heros
-				 * character by doing a slicequery specifying the
-				 * range(username_heroname_0 username_heroname_zzzzzzzzz)
-				 */
-				// dao.insertUserIntoCassandra(npc.getName(),
-				// new String(npc.getPassword()), true);
-				// the get the created user information from the database
-				// dao.SearchingUserUseSecondaryIndexByNameAndPassword(
-				// npc.getName(), new String(npc.getPassword()));
-				// login = dao.getVos().firstElement();
 
 			}
 		} catch (Exception e) {

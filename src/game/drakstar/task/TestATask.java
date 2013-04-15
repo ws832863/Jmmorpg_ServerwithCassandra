@@ -1,4 +1,4 @@
-package game.login;
+package game.drakstar.task;
 
 import java.io.Serializable;
 
