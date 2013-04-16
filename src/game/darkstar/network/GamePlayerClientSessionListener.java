@@ -54,6 +54,7 @@ public class GamePlayerClientSessionListener extends CoreManagedObjects
 	public GamePlayerClientSessionListener(String objetcName,
 			String objectDescription) {
 		super(objetcName, objectDescription);
+
 	}
 
 	public ManagedReference<GamePlayer> getPlayerRef() {
@@ -152,9 +153,11 @@ public class GamePlayerClientSessionListener extends CoreManagedObjects
 		} else {
 			logger.log(Level.WARNING, "{0} unknown command: {1}", new Object[] {
 					this, command });
+			getSession()
+					.send(encodeString("you send a unsupport command, currently only <look> support, you can type look to check other players around here"));
 			// We could disconnect the rogue player at this point.
 			// currentSession.disconnect();
-			disconnected(true);
+			// disconnected(true);
 		}
 
 	}

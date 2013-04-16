@@ -21,8 +21,10 @@
 
 package game.systems;
 
+import game.cassandra.data.GamePlayer;
 import game.core.CoreManagedObjects;
 import game.darkstar.network.GamePlayerClientSessionListener;
+import game.drakstar.task.TaskCheckUserInformation;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
@@ -38,6 +40,7 @@ import java.util.logging.Logger;
 import com.sun.sgs.app.AppContext;
 import com.sun.sgs.app.DataManager;
 import com.sun.sgs.app.ManagedReference;
+import com.sun.sgs.app.TaskManager;
 
 /**
  * Cada regi�o do mapa sera representada por uma Room, os players s� v�o
@@ -137,9 +140,12 @@ public class Room extends CoreManagedObjects {
 		List<GamePlayerClientSessionListener> otherPlayers = getPlayersExcluding(lookerPlayer);
 
 		if (!otherPlayers.isEmpty()) {
-			output.append("Also in here are ");
+			output.append("Also in here are :");
+
 			appendPrettyList(output, otherPlayers);
 			output.append(".\n");
+		} else {
+			output.append("nobody here but you");
 		}
 
 		return output.toString();

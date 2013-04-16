@@ -111,10 +111,15 @@ public class LaunchServer implements AppListener, Serializable {
 		while (it.hasNext()) {
 			System.out.println("it has next" + it.toString());
 			Map map = it.next();
+			
+			//create a channel for the current map
+			//we can create different channel, read the name of map from database
 			Channel c1 = channelMgr.createChannel(("map_" + map.getId()),
 					new GameChannelsListener(), Delivery.RELIABLE);
+			//add a managedreference to channel1
 			ManagedReference<Channel> channel1 = AppContext.getDataManager()
 					.createReference(c1);
+			
 			this.channels.add(channel1);
 
 			Room room = new Room("Room" + map.getId(), "Room" + map.getId());
@@ -122,7 +127,7 @@ public class LaunchServer implements AppListener, Serializable {
 			ManagedReference<Room> r = dataManager.createReference(room);
 			rooms.add(r);
 			System.out.println("map_" + map.getId());
-			System.out.println("Room  " + map.getId());
+			System.out.println("Room" + map.getId());
 		}
 
 		logger.info("-- JMMORPG Initialized ---");
@@ -203,8 +208,13 @@ public class LaunchServer implements AppListener, Serializable {
 				session.send(encodeString(sbMsg.toString()));
 				// Envio um aviso a todos os players deste canal que este player
 				// deslogou
+				
+				//connect this session with map_x channel, all players in this channel
+				//will see the status changes of other users also in the same channel
 				Channel channel = AppContext.getChannelManager().getChannel(
 						"map_" + gPlayer.getMapId());
+				
+				
 				channel.send(
 						null,
 						encodeString("m/" + gPlayer.getLoginId() + "/"
@@ -225,6 +235,17 @@ public class LaunchServer implements AppListener, Serializable {
 				// add this player to our channel
 				AppContext.getChannelManager()
 						.getChannel("map_" + gPlayer.getMapId()).join(session);
+				
+				
+				channel.send(
+						null,
+						encodeString("m/" + gPlayer.getLoginId() + "/"
+								+ gPlayer.getClassId() + "/"
+								+ gPlayer.getUserName() + "/"
+								+ map.getStartTileHeroPosX() + "/"
+								+ map.getStartTileHeroPosY() + "/"
+								+ map.getPosition() + "/"));
+
 
 			}
 		} catch (Exception e) {

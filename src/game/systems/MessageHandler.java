@@ -29,7 +29,7 @@ public class MessageHandler {
 		clientSession = session;
 		String decodeMsg = decodeString(message);
 		System.out.println("a message from client  " + decodeMsg
-				+ "on channel " + cnl.getName());
+				+ "   on channel " + cnl.getName());
 		String msg[] = decodeMsg.split("/");
 
 		if (msg[0].toLowerCase().equals("chat")) {
@@ -40,6 +40,7 @@ public class MessageHandler {
 			this.handleTradeMessage(msg);
 		} else {
 			logger.info("Unsupport Command");
+			this.handleUnSupportMessage(msg);
 		}
 
 	}
@@ -60,12 +61,30 @@ public class MessageHandler {
 			sb.append(s);
 			sb.append("/");
 		}
-		logger.info("Handle a <move> Message" + sb.toString());
+		logger.info("Handle a <move> Message   " + sb.toString());
 		channel.send(clientSession, encodeString(sb.toString()));
 
 	}
 
-	public void handleTradeMessage(String Message[]) {
+	public void handleTradeMessage(String message[]) {
+		StringBuilder sb = new StringBuilder("");
+		for (String s : message) {
+			sb.append(s);
+			sb.append("/");
+		}
+		logger.info("Handle a <Trade> Message   " + sb.toString());
+		channel.send(clientSession, encodeString(sb.toString()));
+
+	}
+
+	public void handleUnSupportMessage(String message[]) {
+		StringBuilder sb = new StringBuilder("");
+		for (String s : message) {
+			sb.append(s);
+			sb.append("/");
+		}
+		logger.info("Handle a <UnSupport> Message   " + sb.toString());
+		channel.send(clientSession, encodeString(sb.toString()));
 
 	}
 
