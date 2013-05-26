@@ -8,14 +8,17 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Vector;
 
+import me.prettyprint.cassandra.model.AllOneConsistencyLevelPolicy;
 import me.prettyprint.cassandra.model.BasicColumnDefinition;
 import me.prettyprint.cassandra.model.BasicColumnFamilyDefinition;
+import me.prettyprint.cassandra.model.ConfigurableConsistencyLevel;
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.cassandra.service.ColumnSliceIterator;
 import me.prettyprint.cassandra.service.ThriftCfDef;
 import me.prettyprint.cassandra.service.template.ColumnFamilyTemplate;
 import me.prettyprint.cassandra.service.template.ThriftColumnFamilyTemplate;
 import me.prettyprint.hector.api.Cluster;
+import me.prettyprint.hector.api.HConsistencyLevel;
 import me.prettyprint.hector.api.Keyspace;
 import me.prettyprint.hector.api.beans.ColumnSlice;
 import me.prettyprint.hector.api.beans.HColumn;
@@ -58,11 +61,26 @@ public class CassandraDAOMap {
 
 	private final static Keyspace keyspaceOperator = HFactory.createKeyspace(
 			KeySpaceName, gameCluster);
+
 	/** The vector used to store Map information **/
 	private Vector<Map> vos;
 
 	public Vector<Map> getVos() {
 		return vos;
+
+	}
+
+	private static ConfigurableConsistencyLevel consistency() {
+		// create a customized Consistency Level
+		ConfigurableConsistencyLevel configurableConsistencyLevel = new ConfigurableConsistencyLevel();
+		HashMap<String, HConsistencyLevel> clmap = new HashMap<String, HConsistencyLevel>();
+		// define cl.one for columnfamily map
+		clmap.put("map", HConsistencyLevel.ONE);
+		// in this we use cl.one for read and writes
+		configurableConsistencyLevel.setReadCfConsistencyLevels(clmap);
+		configurableConsistencyLevel.setWriteCfConsistencyLevels(clmap);
+
+		return configurableConsistencyLevel;
 	}
 
 	/**
@@ -71,9 +89,10 @@ public class CassandraDAOMap {
 	 */
 	public CassandraDAOMap() {
 		vos = new Vector<Map>();
+		// keyspaceOperator
+		// .setConsistencyLevelPolicy(new AllOneConsistencyLevelPolicy());
 	}
-	
-	
+
 	public void selectByPk(int rowKey) {
 		vos.removeAllElements();
 
@@ -88,18 +107,17 @@ public class CassandraDAOMap {
 				query, null, "\uFFFF", false);
 
 		HashMap<String, String> tempResult = new HashMap<String, String>();
-		
+
 		while (iterator.hasNext()) {
 			HColumn<String, String> c = iterator.next();
 			tempResult.put(c.getName(), c.getValue());
 		}
-		
+
 		vos.add(this.mappingHashMapIntoMapObject(key, tempResult));
 
 	}
-	
 
-	public void selectAll()  {
+	public void selectAll() {
 		// there is only one map in the database
 		HashMap<String, HashMap<String, String>> resultMap = new HashMap<String, HashMap<String, String>>();
 		vos.removeAllElements();
@@ -234,6 +252,7 @@ public class CassandraDAOMap {
 
 		basicMapDef.setName(ColumnFamilyName); // set a name for this
 												// columnfamily
+
 		basicMapDef.setKeyspaceName(KeySpaceName);
 		// set comparatortype of the columnfamily
 		basicMapDef.setComparatorType(ComparatorType.UTF8TYPE);
@@ -241,37 +260,42 @@ public class CassandraDAOMap {
 		// if the keyspace not exists, then create a keyspace
 		KeyspaceDefinition keyspaceDefinition = HFactory
 				.createKeyspaceDefinition(KeySpaceName,
-						"org.apache.cassandra.locator.SimpleStrategy", 1,
+						"org.apache.cassandra.locator.SimpleStrategy", 3,
 						Arrays.asList(CFMapDef));
 
 		try {
 
-			if (gameCluster.describeKeyspace(KeySpaceName) != null) {// if the
-																		// keyspace
+			// if the keyspace exists
+			if (gameCluster.describeKeyspace(KeySpaceName) != null) {
 
 				gameCluster.dropColumnFamily(KeySpaceName, ColumnFamilyName,
 						true);
+				gameCluster.addColumnFamily(CFMapDef);
 
 			} else {
+				logger.debug("Keyspace not exists, create it");
 				gameCluster.addKeyspace(keyspaceDefinition);
 			}
 
 		} catch (HectorException he) {
 			logger.warn("a error occured :" + he.toString());
-			// he.printStackTrace();
+			gameCluster.addColumnFamily(CFMapDef);
 		}
-		gameCluster.addColumnFamily(CFMapDef);// the new columnfamily into
-												// cassandra
-		logger.info(" MapSchema created<====");
+		logger.info(" MapSchema created<=======");
 
 	}
 
 	public static void prepopulateMapData() {
+		logger.info("Starting prepopulating data for CF Map");
+		logger.info("consistency level" + keyspaceOperator);
 
 		ColumnFamilyTemplate<String, String> columnFamilyTemplate = new ThriftColumnFamilyTemplate<String, String>(
 				keyspaceOperator, ColumnFamilyName, stringSerializer,
 				stringSerializer);
-
+		//set consistency policy as read one write one.
+		keyspaceOperator
+				.setConsistencyLevelPolicy(new AllOneConsistencyLevelPolicy());
+		
 		Mutator<String> mutator = columnFamilyTemplate.createMutator();
 
 		mutator.addInsertion("1", ColumnFamilyName,
@@ -290,6 +314,8 @@ public class CassandraDAOMap {
 				HFactory.createStringColumn("position", "0"));
 
 		mutator.execute();
+		logger.info("the data have been insterted to map");
+
 	}
 
 	public void testVectorMaps() {
@@ -300,19 +326,13 @@ public class CassandraDAOMap {
 			System.out.println(vo.toString());
 		}
 	}
-	
-	
+
 	// used for test this class
 	public static void main(String[] str) {
-		// CassandraDAOMap.createMapSchema();
-		// CassandraDAOMap.prepopulateMapData();
+		//CassandraDAOMap.createMapSchema();
+		//CassandraDAOMap.prepopulateMapData();
 		CassandraDAOMap dao = new CassandraDAOMap();
-		try {
-			dao.selectAll();
-			dao.testVectorMaps();
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		dao.selectAll();
+		dao.testVectorMaps();
 	}
 }

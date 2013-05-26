@@ -8,14 +8,17 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Vector;
 
+import me.prettyprint.cassandra.model.AllOneConsistencyLevelPolicy;
 import me.prettyprint.cassandra.model.BasicColumnDefinition;
 import me.prettyprint.cassandra.model.BasicColumnFamilyDefinition;
+import me.prettyprint.cassandra.model.ConfigurableConsistencyLevel;
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.cassandra.service.ColumnSliceIterator;
 import me.prettyprint.cassandra.service.ThriftCfDef;
 import me.prettyprint.cassandra.service.template.ColumnFamilyTemplate;
 import me.prettyprint.cassandra.service.template.ThriftColumnFamilyTemplate;
 import me.prettyprint.hector.api.Cluster;
+import me.prettyprint.hector.api.HConsistencyLevel;
 import me.prettyprint.hector.api.Keyspace;
 import me.prettyprint.hector.api.beans.ColumnSlice;
 import me.prettyprint.hector.api.beans.HColumn;
@@ -58,8 +61,23 @@ public class CassandraDAOGamePlayer {
 		return vos;
 	}
 
+	private static ConfigurableConsistencyLevel consistency() {
+		// create a customized Consistency Level
+		ConfigurableConsistencyLevel configurableConsistencyLevel = new ConfigurableConsistencyLevel();
+		HashMap<String, HConsistencyLevel> clmap = new HashMap<String, HConsistencyLevel>();
+		// define cl.one for columnfamily map
+		clmap.put(ColumnFamilyName, HConsistencyLevel.ONE);
+		// in this we use cl.one for read and writes
+		configurableConsistencyLevel.setReadCfConsistencyLevels(clmap);
+		configurableConsistencyLevel.setWriteCfConsistencyLevels(clmap);
+
+		return configurableConsistencyLevel;
+	}
+
 	public CassandraDAOGamePlayer() {
 		vos = new Vector<GamePlayer>();
+		keyspaceOperator
+				.setConsistencyLevelPolicy(new AllOneConsistencyLevelPolicy());
 	}
 
 	public void selectByPk(int rowKey) {
@@ -81,7 +99,7 @@ public class CassandraDAOGamePlayer {
 			HColumn<String, String> c = iterator.next();
 			tempResult.put(c.getName(), c.getValue());
 		}
-
+		logger.info("get a user by pk " + tempResult.toString());
 		vos.add(this.mappingHashMapIntoGamePlayerObject(key, tempResult));
 
 	}
@@ -429,6 +447,8 @@ public class CassandraDAOGamePlayer {
 		ColumnFamilyTemplate<String, String> columnFamilyTemplate = new ThriftColumnFamilyTemplate<String, String>(
 				keyspaceOperator, ColumnFamilyName, stringSerializer,
 				stringSerializer);
+		keyspaceOperator
+				.setConsistencyLevelPolicy(new AllOneConsistencyLevelPolicy());
 		Mutator<String> mutator = columnFamilyTemplate.createMutator();
 		// add a default user
 		// addInsseration(mutator, "1");
@@ -551,14 +571,13 @@ public class CassandraDAOGamePlayer {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		CassandraDAOGamePlayer.createGamePlayerSchema();
-		CassandraDAOGamePlayer.GamePlayerPrePopulate();
+	//	CassandraDAOGamePlayer.createGamePlayerSchema();
+	//	 CassandraDAOGamePlayer.GamePlayerPrePopulate();
 		CassandraDAOGamePlayer cdp = new CassandraDAOGamePlayer();
-		// cdp.selectByLoginPassword("player1", "player");
-		// cdp.selectAll();
-		// cdp.selectByPk(8);
-		cdp.selectByLoginName("player1");
-		cdp.testVectorClans();
+		 cdp.selectAll();
+		cdp.selectByPk(5);
+		 cdp.selectByLoginName("player1");
+		 cdp.testVectorClans();
 	}
 
 }
