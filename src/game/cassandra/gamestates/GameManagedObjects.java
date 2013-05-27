@@ -1,4 +1,4 @@
-package game.core;
+package game.cassandra.gamestates;
 
 import java.io.Serializable;
 
@@ -6,9 +6,11 @@ import com.sun.sgs.app.AppContext;
 import com.sun.sgs.app.ManagedObject;
 
 /**
- * @author Michel Montenegro
+ * @author shuo wang
+ * a super class implements managedobject
+ * for room and gameplayer
  */
-public class CoreManagedObjects 			
+public class GameManagedObjects 			
 			implements Serializable, ManagedObject{
 
 	private static final long serialVersionUID = -6198764068063530005L;
@@ -27,7 +29,7 @@ public class CoreManagedObjects
      * @param name the name of this object
      * @param description the description of this object
      */
-    public CoreManagedObjects(String objetcName, String objectDescription) {
+    public GameManagedObjects(String objetcName, String objectDescription) {
         this.objetcName = objetcName;
         this.objectDescription = objectDescription;
     }
@@ -58,6 +60,8 @@ public class CoreManagedObjects
 
     public String getObjectName() {
         return objetcName;
+    }
+    public void destoryMe(){
     }
 
     /** {@inheritDoc} */

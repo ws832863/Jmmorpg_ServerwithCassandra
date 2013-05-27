@@ -1,11 +1,14 @@
 package game.cassandra.dao;
 
+import game.cassandra.Factorys.GamePlayerFactory;
 import game.cassandra.conn.CassandraConnection;
 import game.cassandra.data.GamePlayer;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Vector;
 
 import me.prettyprint.cassandra.model.AllOneConsistencyLevelPolicy;
@@ -30,6 +33,7 @@ import me.prettyprint.hector.api.ddl.ComparatorType;
 import me.prettyprint.hector.api.ddl.KeyspaceDefinition;
 import me.prettyprint.hector.api.exceptions.HectorException;
 import me.prettyprint.hector.api.factory.HFactory;
+import me.prettyprint.hector.api.mutation.MutationResult;
 import me.prettyprint.hector.api.mutation.Mutator;
 import me.prettyprint.hector.api.query.QueryResult;
 import me.prettyprint.hector.api.query.RangeSlicesQuery;
@@ -261,6 +265,68 @@ public class CassandraDAOGamePlayer {
 				break;
 		}
 
+	}
+
+	public void addNewGamePlayer(List<GamePlayer> listGp) {
+		ColumnFamilyTemplate<String, String> columnFamilyTemplate = new ThriftColumnFamilyTemplate<String, String>(
+				keyspaceOperator, ColumnFamilyName, stringSerializer,
+				stringSerializer);
+		keyspaceOperator
+				.setConsistencyLevelPolicy(new AllOneConsistencyLevelPolicy());
+		Mutator<String> mutator = columnFamilyTemplate.createMutator();
+		int i = 0;
+		for (GamePlayer gp : listGp) {
+
+			CassandraDAOGamePlayer.addInsseration(mutator,
+					String.valueOf(gp.getLoginId()), gp.getUserName(),
+					gp.getUserPassword(), gp.getRegistDate(),
+					gp.getLastActiveIp(), gp.getLastActiceDate(),
+					gp.getTrueName(), gp.getEmail(), gp.getBirth(),
+					String.valueOf(gp.getMapId()), gp.getHeroClass(),
+					gp.getHeroRace(), String.valueOf(gp.getCurrHp()),
+					String.valueOf(gp.getMaxHp()),
+					String.valueOf(gp.getCurrExp()),
+					String.valueOf(gp.getMaxExp()),
+					String.valueOf(gp.getStrength()),
+					String.valueOf(gp.getAttack()),
+					String.valueOf(gp.getDefense()),
+					String.valueOf(gp.getClassId()),
+					String.valueOf(gp.getRaceId()));
+			i++;
+			if (i % 100 == 0) {
+				System.out.println(mutator.execute().getExecutionTimeMicro());
+			}
+		}
+		mutator.execute();
+
+	}
+
+	public void addNewGamePlayer(GamePlayer gp) {
+		ColumnFamilyTemplate<String, String> columnFamilyTemplate = new ThriftColumnFamilyTemplate<String, String>(
+				keyspaceOperator, ColumnFamilyName, stringSerializer,
+				stringSerializer);
+		keyspaceOperator
+				.setConsistencyLevelPolicy(new AllOneConsistencyLevelPolicy());
+		Mutator<String> mutator = columnFamilyTemplate.createMutator();
+
+		CassandraDAOGamePlayer
+				.addInsseration(mutator, String.valueOf(gp.getLoginId()),
+						gp.getUserName(), gp.getUserPassword(),
+						gp.getRegistDate(), gp.getLastActiveIp(),
+						gp.getLastActiceDate(), gp.getTrueName(),
+						gp.getEmail(), gp.getBirth(),
+						String.valueOf(gp.getMapId()), gp.getHeroClass(),
+						gp.getHeroRace(), String.valueOf(gp.getCurrHp()),
+						String.valueOf(gp.getMaxHp()),
+						String.valueOf(gp.getCurrExp()),
+						String.valueOf(gp.getMaxExp()),
+						String.valueOf(gp.getStrength()),
+						String.valueOf(gp.getAttack()),
+						String.valueOf(gp.getDefense()),
+						String.valueOf(gp.getClassId()),
+						String.valueOf(gp.getRaceId()));
+		MutationResult mr = mutator.execute();
+		System.out.println("time: " + mr.getExecutionTimeMicro());
 	}
 
 	private GamePlayer mappingHashMapIntoGamePlayerObject(String rowkey,
@@ -571,13 +637,18 @@ public class CassandraDAOGamePlayer {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-	//	CassandraDAOGamePlayer.createGamePlayerSchema();
-	//	 CassandraDAOGamePlayer.GamePlayerPrePopulate();
+		// CassandraDAOGamePlayer.createGamePlayerSchema();
+		// CassandraDAOGamePlayer.GamePlayerPrePopulate();
 		CassandraDAOGamePlayer cdp = new CassandraDAOGamePlayer();
-		 cdp.selectAll();
-		cdp.selectByPk(5);
-		 cdp.selectByLoginName("player1");
-		 cdp.testVectorClans();
-	}
+		// cdp.selectAll();
+		// cdp.selectByPk(5);
+		// cdp.selectByLoginName("player1");
+		// cdp.testVectorClans();
+		List<GamePlayer> ll = new ArrayList<GamePlayer>();
+		for (int i = 0; i < 1000; i++) {
+			ll.add(GamePlayerFactory.createPlayer());
 
+		}
+		cdp.addNewGamePlayer(ll);
+	}
 }

@@ -1,48 +1,48 @@
 package game.systems;
 
-import java.io.UnsupportedEncodingException;
+import game.cassandra.utils.Utils;
+import game.darkstar.network.GamePlayerClientSessionListener;
+
+import java.io.Serializable;
 import java.nio.ByteBuffer;
+import java.util.logging.Logger;
 
-import org.apache.log4j.Logger;
 
-import com.sun.sgs.app.Channel;
 import com.sun.sgs.app.ClientSession;
+import com.sun.sgs.app.ManagedReference;
 
-public class MessageHandler {
-	/** The message encoding. */
-	private static final String MESSAGE_CHARSET = "UTF-8";
-	private Logger logger = Logger.getLogger(MessageHandler.class.getName());
-	private Channel channel;
-	private ClientSession clientSession;
+public class MessageHandler implements Serializable {
 
 	/**
-	 * a class to handle the message from client and server
+	 * 
 	 */
-	public static void main(String[] args) {
-		// TODO Auto-generated method stub
+	private static final long serialVersionUID = 7909343275679216917L;
+	
+	//private Logger logger = Logger.getLogger(MessageHandler.class.getName());
+	
+	private ManagedReference<ClientSession> sessionRef = null;
+	private ManagedReference<GamePlayerClientSessionListener> playerSessionRef = null;
 
-	}
+	/**
+	 * @param args
+	 */
 
-	public void handleMessage(Channel cnl, ClientSession session,
+	public void handleMessage(GamePlayerClientSessionListener playerSession,
 			ByteBuffer message) {
-		channel = cnl;
-		clientSession = session;
-		String decodeMsg = decodeString(message);
-		System.out.println("a message from client  " + decodeMsg
-				+ "   on channel " + cnl.getName());
+		String decodeMsg = Utils.decodeByteBufferToString(message);
+		System.out.println("a message from client  " + decodeMsg);
 		String msg[] = decodeMsg.split("/");
 
-		if (msg[0].toLowerCase().equals("chat")) {
+		if (msg[0].toLowerCase().equals("/look")) {
 			this.handleChatMessage(msg);
 		} else if (msg[0].toLowerCase().equals("m")) {
 			this.handleMovementMessage(msg);
 		} else if (msg[0].toLowerCase().equals("trade")) {
 			this.handleTradeMessage(msg);
 		} else {
-			logger.info("Unsupport Command");
+	//		logger.info("Unsupport Command");
 			this.handleUnSupportMessage(msg);
 		}
-
 	}
 
 	public void handleChatMessage(String message[]) {
@@ -51,8 +51,8 @@ public class MessageHandler {
 			sb.append(s);
 			sb.append("/");
 		}
-		logger.info("Handle a <Chat> Message  " + sb.toString());
-		channel.send(clientSession, encodeString(sb.toString()));
+	//	logger.info("Handle a <Chat> Message  " + sb.toString());
+		getSession().send(Utils.encodeStringToByteBuffer(sb.toString()));
 	}
 
 	public void handleMovementMessage(String message[]) {
@@ -61,8 +61,8 @@ public class MessageHandler {
 			sb.append(s);
 			sb.append("/");
 		}
-		logger.info("Handle a <move> Message   " + sb.toString());
-		channel.send(clientSession, encodeString(sb.toString()));
+	//	logger.info("Handle a <move> Message   " + sb.toString());
+		getSession().send(Utils.encodeStringToByteBuffer(sb.toString()));
 
 	}
 
@@ -72,8 +72,8 @@ public class MessageHandler {
 			sb.append(s);
 			sb.append("/");
 		}
-		logger.info("Handle a <Trade> Message   " + sb.toString());
-		channel.send(clientSession, encodeString(sb.toString()));
+	//	logger.info("Handle a <Trade> Message   " + sb.toString());
+		getSession().send(Utils.encodeStringToByteBuffer(sb.toString()));
 
 	}
 
@@ -83,43 +83,15 @@ public class MessageHandler {
 			sb.append(s);
 			sb.append("/");
 		}
-		logger.info("Handle a <UnSupport> Message   " + sb.toString());
-		channel.send(clientSession, encodeString(sb.toString()));
+	//	logger.info("Handle a <UnSupport> Message   " + sb.toString());
+		getSession().send(Utils.encodeStringToByteBuffer(sb.toString()));
 
 	}
 
-	/**
-	 * Encodes a {@code String} into a {@link ByteBuffer}.
-	 * 
-	 * @param s
-	 *            the string to encode
-	 * @return the {@code ByteBuffer} which encodes the given string
-	 */
-	protected static ByteBuffer encodeString(String s) {
-		try {
-			return ByteBuffer.wrap(s.getBytes(MESSAGE_CHARSET));
-		} catch (UnsupportedEncodingException e) {
-			throw new Error("Required character set " + MESSAGE_CHARSET
-					+ " not found", e);
+	private ClientSession getSession() {
+		if (sessionRef != null) {
+			return sessionRef.get();
 		}
+		return null;
 	}
-
-	/**
-	 * Decodes a {@link ByteBuffer} into a {@code String}.
-	 * 
-	 * @param buf
-	 *            the {@code ByteBuffer} to decode
-	 * @return the decoded string
-	 */
-	protected static String decodeString(ByteBuffer buf) {
-		try {
-			byte[] bytes = new byte[buf.remaining()];
-			buf.get(bytes);
-			return new String(bytes, MESSAGE_CHARSET);
-		} catch (UnsupportedEncodingException e) {
-			throw new Error("Required character set " + MESSAGE_CHARSET
-					+ " not found", e);
-		}
-	}
-
 }

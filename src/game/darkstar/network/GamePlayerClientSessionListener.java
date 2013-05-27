@@ -1,12 +1,16 @@
 package game.darkstar.network;
 
 import game.cassandra.data.GamePlayer;
-import game.core.CoreManagedObjects;
-import game.systems.Room;
+import game.cassandra.data.PlayerInventory;
+import game.cassandra.gamestates.GameManagedObjects;
+import game.cassandra.gamestates.Room;
+import game.systems.GlobalPlayersControl;
+import game.systems.MessageHandler;
 
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -23,7 +27,7 @@ import com.sun.sgs.app.NameNotBoundException;
  * @author Shuo Wang
  * 
  */
-public class GamePlayerClientSessionListener extends CoreManagedObjects
+public class GamePlayerClientSessionListener extends GameManagedObjects
 		implements Serializable, ClientSessionListener {
 
 	private static final long serialVersionUID = -6143746028573880418L;
@@ -45,6 +49,14 @@ public class GamePlayerClientSessionListener extends CoreManagedObjects
 
 	private ManagedReference<GamePlayer> playerRef = null;
 
+	private MessageHandler handler;
+
+	// private ManagedReference<PlayerInventory> inventoryRef = null;
+
+	// private ManagedReference<GlobalPlayersControl> global = null;
+
+	// private Set<ManagedReference<PlayerInventory>> inventorySet = null;
+
 	/**
 	 * Creates a new {@code Player} with the given name.
 	 * 
@@ -54,15 +66,32 @@ public class GamePlayerClientSessionListener extends CoreManagedObjects
 	public GamePlayerClientSessionListener(String objetcName,
 			String objectDescription) {
 		super(objetcName, objectDescription);
-
+		handler = new MessageHandler();
 	}
 
 	public ManagedReference<GamePlayer> getPlayerRef() {
 		return playerRef;
 	}
 
+	public GamePlayer getPlayer() {
+		if (playerRef != null) {
+			return playerRef.get();
+		} else {
+			return null;
+		}
+	}
+
+	/*
+	 * userlogin in ,and set a Gameplayer instance for this user the gameplayer
+	 * get from the database and set a inventory for the player here
+	 */
+
 	public void setPlayerRef(ManagedReference<GamePlayer> playerRef) {
+
 		this.playerRef = playerRef;
+		this.setInventory(playerRef.get().getUserName());
+		// AppContext.getDataManager().createReference(
+		// playerRef.get().getInventory());
 	}
 
 	/**
@@ -92,6 +121,27 @@ public class GamePlayerClientSessionListener extends CoreManagedObjects
 		}
 		player.setSession(session);
 		return player;
+	}
+
+	/**
+	 * try to find the users inventory in the object store if not found, then
+	 * create a new inventory store.
+	 * 
+	 * use database in the future
+	 * 
+	 * @param bind
+	 */
+	protected void setInventory(String bind) {
+		PlayerInventory inventory;
+		DataManager dataMgr = AppContext.getDataManager();
+		try {
+			inventory = (PlayerInventory) dataMgr.getBinding(bind);
+		} catch (NameNotBoundException ex) {
+			inventory = new PlayerInventory();
+			dataMgr.setBinding(bind, inventory);
+		}
+
+		this.getPlayer().setInventory(inventory);
 	}
 
 	/**
@@ -150,7 +200,13 @@ public class GamePlayerClientSessionListener extends CoreManagedObjects
 		if (command.equalsIgnoreCase("look")) {
 			String reply = getRoom().look(this);
 			getSession().send(encodeString(reply));
+		} else if (command.equalsIgnoreCase("inventory")) {
+			getSession()
+					.send(encodeString("my inventory: "
+							+ getPlayer().getInventory()));
 		} else {
+
+			// handler.handleMessage(this, message);
 			logger.log(Level.WARNING, "{0} unknown command: {1}", new Object[] {
 					this, command });
 			getSession()
@@ -164,22 +220,37 @@ public class GamePlayerClientSessionListener extends CoreManagedObjects
 
 	/** {@inheritDoc} */
 	public void disconnected(boolean graceful) {
-		// Envia um aviso a todos os players deste canal que este player
-		// deslogou
-		// null = N�o manda a informa��o dasess�o que envio a mensagem
-		// getSession = passa a sess�o como responsavel pelo envio da mensagem
 
 		Channel channel = AppContext.getChannelManager().getChannel(
 				"map_" + playerRef.get().getMapId());
 		channel.send(null, encodeString("m/loggout/"
 				+ playerRef.get().getLoginId() + "/"));
 
-		// Limpa os objetos referentes a este player
-		setSession(null);
 		logger.log(Level.INFO, "Disconnected: {0}", this);
+
+		cleanUp();
+		// this.inventoryRef = null;
+
+	}
+
+	/**
+	 * clean up the object store delete name binding remove the managedobject
+	 */
+
+	public void cleanUp() {
+		// setSession(null);
+		logger.log(Level.INFO, "User disconnect, cleanup");
 		getRoom().removePlayer(this);
 		setRoom(null);
+
+		// remove the player from data manager
+		logger.log(Level.INFO, "remove bindung {0}", playerRef.get()
+				.getUserName());
+		AppContext.getDataManager().removeBinding(
+				PLAYER_BIND_PREFIX + playerRef.get().getUserName());
+		AppContext.getDataManager().removeObject(playerRef.get());
 		playerRef = null;
+		logger.log(Level.INFO, "clean up finished");
 	}
 
 	/**
@@ -229,6 +300,18 @@ public class GamePlayerClientSessionListener extends CoreManagedObjects
 		playerRef = dataManager.createReference(player);
 	}
 
+	//
+	// public void setGlobalControl(ManagedReference<GlobalPlayersControl>
+	// global) {
+	//
+	// DataManager dataManager = AppContext.getDataManager();
+	// dataManager.markForUpdate(this);
+	//
+	// //this.global = global;
+	// // global.get().containsUser(this.playerRef.get());
+	// // global.get().containsInventory(pi)
+	// }
+
 	/**
 	 * Encodes a {@code String} into a {@link ByteBuffer}.
 	 * 
@@ -274,25 +357,6 @@ public class GamePlayerClientSessionListener extends CoreManagedObjects
 			buf.append(currentSessionRef.getId());
 		}
 		return buf.toString();
-	}
-
-	private int tempPosX;
-	private int tempPosY;
-
-	public int getTempPosX() {
-		return tempPosX;
-	}
-
-	public void setTempPosX(int tempPosX) {
-		this.tempPosX = tempPosX;
-	}
-
-	public int getTempPosY() {
-		return tempPosY;
-	}
-
-	public void setTempPosY(int tempPosY) {
-		this.tempPosY = tempPosY;
 	}
 
 }

@@ -2,13 +2,16 @@ package game;
 
 import game.cassandra.dao.CassandraDAOGamePlayer;
 import game.cassandra.dao.CassandraDAOMap;
+import game.cassandra.dao.UserLoginHelper;
 import game.cassandra.data.GamePlayer;
 import game.cassandra.data.Map;
+import game.cassandra.data.PlayerInventory;
+import game.cassandra.gamestates.Room;
 import game.darkstar.network.GameChannelsListener;
 import game.darkstar.network.GamePlayerClientSessionListener;
+import game.drakstar.task.ProduceItemInTheRoom;
 import game.drakstar.task.TestATask;
-
-import game.systems.Room;
+import game.systems.GlobalPlayersControl;
 
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
@@ -48,6 +51,11 @@ public class LaunchServer implements AppListener, Serializable {
 
 	/** A reference to the one-and-only {@linkplain SwordWorldRoom room}. */
 	private Set<ManagedReference<Room>> rooms = null;
+
+	// private Set<ManagedReference<GamePlayer>> playerList = null;
+	// private Set<ManagedReference<PlayerInventory>> inventoryList = null;
+
+	// private ManagedReference<GlobalPlayersControl> globalRef = null;
 
 	public static final String MESSAGE_CHARSET = "UTF-8";
 
@@ -93,12 +101,14 @@ public class LaunchServer implements AppListener, Serializable {
 	@Override
 	public void initialize(Properties arg0) {
 		// Create the Room
-
 		this.channels = new HashSet<ManagedReference<Channel>>();
 		this.rooms = new HashSet<ManagedReference<Room>>();
 
-		logger.info("initialing rooms-------LaunchServer");
-		
+
+		logger.info("Initialing all gamestate in the gameword ,only once-------LaunchServer");
+
+		// read the map information in the database, and create all room for
+		// users
 		CassandraDAOMap dao = new CassandraDAOMap();
 		try {
 			dao.selectAll();
@@ -111,23 +121,33 @@ public class LaunchServer implements AppListener, Serializable {
 		while (it.hasNext()) {
 			System.out.println("it has next" + it.toString());
 			Map map = it.next();
-			
-			//create a channel for the current map
-			//we can create different channel, read the name of map from database
+
+			// create a channel for the current map
+			// we can create different channel, read the name of map from
+			// database
 			Channel c1 = channelMgr.createChannel(("map_" + map.getId()),
 					new GameChannelsListener(), Delivery.RELIABLE);
-			//add a managedreference to channel1
+			// add a managedreference to channel1
 			ManagedReference<Channel> channel1 = AppContext.getDataManager()
 					.createReference(c1);
-			
-			this.channels.add(channel1);
+			// create a channel for everyroom and add it to the channelsSet
+			channels.add(channel1);
 
 			Room room = new Room("Room" + map.getId(), "Room" + map.getId());
 			DataManager dataManager = AppContext.getDataManager();
 			ManagedReference<Room> r = dataManager.createReference(room);
+
 			rooms.add(r);
+
 			System.out.println("map_" + map.getId());
 			System.out.println("Room" + map.getId());
+
+			logger.info("runnning periodic task");
+			
+			
+			// schedule the task
+			TaskManager tm = AppContext.getTaskManager();
+			tm.schedulePeriodicTask(new ProduceItemInTheRoom(r), 0, 10000);
 		}
 
 		logger.info("-- JMMORPG Initialized ---");
@@ -136,124 +156,70 @@ public class LaunchServer implements AppListener, Serializable {
 
 	@Override
 	public ClientSessionListener loggedIn(ClientSession session) {
-		logger.info("user trys to login in the loginin method be invoked!!");
-
-		logger.info("schedule task run========login");
-		TaskManager simpleTask = AppContext.getTaskManager();
-		TestATask t = new TestATask(session.getName());
-		simpleTask.scheduleTask(t);
 
 		String name = session.getName();
-
-		logger.log(Level.INFO, "JMMORPG Client login: {0}", name);
-
-		CassandraDAOGamePlayer cdgp = new CassandraDAOGamePlayer();
-		CassandraDAOMap daomap = new CassandraDAOMap();
-		GamePlayer gPlayer = new GamePlayer();
-
+		logger.log(Level.INFO, "JMMORPG Client trying to login: {0}", name);
+		UserLoginHelper check = new UserLoginHelper();
+		GamePlayer gamePlayer = check.checkUser(name, "player");
 		Map map = null;
 
-		GamePlayerClientSessionListener SessionPlayer = null;
-		try {
-			cdgp.selectByLoginName(name);
+		// the users exists and get the gameplayer information from database
+		if (gamePlayer != null) {
+			session.send(encodeString(check.verfiedString()));
+			map = check.getMap();
+		} else {
 
-			if (cdgp.getVos() != null && !cdgp.getVos().isEmpty()) {
-				gPlayer = cdgp.getVos().firstElement();
-
-				System.out.println("username >>>>" + gPlayer.getUserName());
-				System.out.println("classe >>>>" + gPlayer.getHeroClass());
-
-				System.out.println("Race >>>>" + gPlayer.getHeroRace());
-
-				daomap.selectByPk(gPlayer.getMapId());
-				map = daomap.getVos().firstElement();
-
-				// server send command, client use this command to load player
-				StringBuilder sbMsg = new StringBuilder();
-				sbMsg.append("loadPlayer").append("/");
-				sbMsg.append(gPlayer.getLoginId()).append("/");// player.getId()
-				sbMsg.append(gPlayer.getUserName()).append("/");// player.getName()
-				sbMsg.append(gPlayer.getLoginId()).append("/");// player.getLoginId()
-				sbMsg.append(gPlayer.getMapId()).append("/");// player.getMapId()
-				sbMsg.append(gPlayer.getClassId()).append("/");// player.getClasseId()
-				sbMsg.append(gPlayer.getMaxHp()).append("/");// player.getHpMax()
-				sbMsg.append(gPlayer.getCurrHp()).append("/");// player.getHpCurr()
-				sbMsg.append("10").append("/");// player.getManaMax()
-				sbMsg.append("10").append("/");// player.getManaCurr()
-				sbMsg.append(gPlayer.getMaxExp()).append("/");// player.getExpMax()
-				sbMsg.append(gPlayer.getCurrExp()).append("/");// player.getExpCurr()
-				sbMsg.append(gPlayer.getAttack()).append("/");// player.getSp()
-				sbMsg.append(gPlayer.getStrength()).append("/");// player.getStr()
-				sbMsg.append(gPlayer.getDefense()).append("/");// player.getDex()
-				sbMsg.append("10").append("/");// player.getCon()
-				sbMsg.append("10").append("/");// player.getInte()
-				sbMsg.append("10").append("/");// player.getCha()
-				sbMsg.append("10").append("/");// player.getWis()
-				sbMsg.append("10").append("/");// player.getStamina()
-				sbMsg.append("10").append("/");// player.getSex()
-				sbMsg.append("10").append("/");// player.getResMagic()
-				sbMsg.append("10").append("/");// player.getResPhysical()
-				sbMsg.append("10").append("/");// player.getEvasion()
-				sbMsg.append(gPlayer.getRegistDate()).append("/");// player.getDateCreate()
-				sbMsg.append("F").append("/");// player.getOnLine()
-				sbMsg.append(gPlayer.getLastActiceDate()).append("/");// player.getLastAcess()
-				sbMsg.append("0").append("/");// player.getSector()
-				sbMsg.append(gPlayer.getHeroClass()).append("/");// classe.getNameClasse()
-				sbMsg.append(gPlayer.getHeroRace()).append("/");// race.getRace()
-				sbMsg.append(map.getStartTileHeroPosX()).append("/");// map.getStartTileHeroPosX()
-				sbMsg.append(map.getStartTileHeroPosY()).append("/");// map.getStartTileHeroPosY()
-				sbMsg.append(map.getPosition()).append("/");// map.getPosition()
-
-				System.out.println(sbMsg.toString());
-				session.send(encodeString(sbMsg.toString()));
-				// Envio um aviso a todos os players deste canal que este player
-				// deslogou
-				
-				//connect this session with map_x channel, all players in this channel
-				//will see the status changes of other users also in the same channel
-				Channel channel = AppContext.getChannelManager().getChannel(
-						"map_" + gPlayer.getMapId());
-				
-				
-				channel.send(
-						null,
-						encodeString("m/" + gPlayer.getLoginId() + "/"
-								+ gPlayer.getClassId() + "/"
-								+ gPlayer.getUserName() + "/"
-								+ map.getStartTileHeroPosX() + "/"
-								+ map.getStartTileHeroPosY() + "/"
-								+ map.getPosition() + "/"));
-
-				// Cria um canal e adiciona no vetor
-				SessionPlayer = GamePlayerClientSessionListener
-						.loggedIn(session);
-
-				// Put player in room
-				SessionPlayer.enter(getRoom("Room" + gPlayer.getMapId()),
-						gPlayer);
-
-				// add this player to our channel
-				AppContext.getChannelManager()
-						.getChannel("map_" + gPlayer.getMapId()).join(session);
-				
-				
-				channel.send(
-						null,
-						encodeString("m/" + gPlayer.getLoginId() + "/"
-								+ gPlayer.getClassId() + "/"
-								+ gPlayer.getUserName() + "/"
-								+ map.getStartTileHeroPosX() + "/"
-								+ map.getStartTileHeroPosY() + "/"
-								+ map.getPosition() + "/"));
-
-
-			}
-		} catch (Exception e) {
-			System.out.println(e.toString());
-			// e.printStackTrace();
 			return null;
 		}
+		
 
+		// connect this session with map_x channel, all players in this
+		// channel
+		// will see the status changes of other users also in the same
+		// channel
+		Channel channel = AppContext.getChannelManager().getChannel(
+				"map_" + gamePlayer.getMapId());
+
+		channel.send(
+				null,
+				encodeString("m/" + gamePlayer.getLoginId() + "/"
+						+ gamePlayer.getClassId() + "/"
+						+ gamePlayer.getUserName() + "/"
+						+ map.getStartTileHeroPosX() + "/"
+						+ map.getStartTileHeroPosY() + "/" + map.getPosition()
+						+ "/"));
+		GamePlayerClientSessionListener SessionPlayer = null;
+
+		SessionPlayer = GamePlayerClientSessionListener.loggedIn(session);
+
+		// in the mean time the players inventory will be set
+		SessionPlayer.setPlayerRef(AppContext.getDataManager().createReference(
+				gamePlayer));
+
+		// Put player in room.
+		SessionPlayer
+				.enter(getRoom("Room" + gamePlayer.getMapId()), gamePlayer);
+
+		// add this player to one channel, it depends which room is
+		// player in
+	
+		
+		
+		AppContext.getChannelManager()
+				.getChannel("map_" + gamePlayer.getMapId()).join(session);
+
+		/*
+		 * when user logined in ,send the lasted postions of this user via
+		 * channel.
+		 */
+		channel.send(
+				null,
+				encodeString("m/" + gamePlayer.getLoginId() + "/"
+						+ gamePlayer.getClassId() + "/"
+						+ gamePlayer.getUserName() + "/"
+						+ map.getStartTileHeroPosX() + "/"
+						+ map.getStartTileHeroPosY() + "/" + map.getPosition()
+						+ "/"));
 		// return player object as listener to this client session
 		return SessionPlayer;
 	}

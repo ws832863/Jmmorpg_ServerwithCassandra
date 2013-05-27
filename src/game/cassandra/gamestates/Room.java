@@ -19,12 +19,9 @@
  * --
  */
 
-package game.systems;
+package game.cassandra.gamestates;
 
-import game.cassandra.data.GamePlayer;
-import game.core.CoreManagedObjects;
 import game.darkstar.network.GamePlayerClientSessionListener;
-import game.drakstar.task.TaskCheckUserInformation;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
@@ -40,24 +37,27 @@ import java.util.logging.Logger;
 import com.sun.sgs.app.AppContext;
 import com.sun.sgs.app.DataManager;
 import com.sun.sgs.app.ManagedReference;
-import com.sun.sgs.app.TaskManager;
 
 /**
- * Cada regi�o do mapa sera representada por uma Room, os players s� v�o
- * interagir com os players da mesma room, futuramente havera intera��o global
  * 
- * @author Michel Montenegro Represents a room in the {@link JMMORPG} example
- *         MUD.
+ * 
+ * This class represents a room in the game world, inherits from
+ * gamemanagedobject and managed by Datamanager
+ * 
+ * see also the original example by Darkstar
  */
-public class Room extends CoreManagedObjects {
+public class Room extends GameManagedObjects {
 	/** The version of the serialized form of this class. */
 	private static final long serialVersionUID = 3886351480109103254L;
 
 	/** The {@link Logger} for this class. */
 	private static final Logger logger = Logger.getLogger(Room.class.getName());
 
+	/** The set of items in this room */
+	private final Set<ManagedReference<Item>> items = new HashSet<ManagedReference<Item>>();
+
 	/** The set of players in this room. */
-	private final Set<ManagedReference<GamePlayerClientSessionListener>> players = new HashSet<ManagedReference<GamePlayerClientSessionListener>>();
+	private final Set<ManagedReference<GamePlayerClientSessionListener>> playersSet = new HashSet<ManagedReference<GamePlayerClientSessionListener>>();
 
 	/** The message encoding. */
 	public static final String MESSAGE_CHARSET = "UTF-8";
@@ -75,6 +75,55 @@ public class Room extends CoreManagedObjects {
 		super(name, description);
 	}
 
+	public boolean addItem(Item item) {
+		logger.log(Level.INFO, "{0} placed in {1}", new Object[] { item, this });
+		// we can not directly save the item in the list
+		// instead we must save a managedreference to the item
+		DataManager dataMgr = AppContext.getDataManager();
+		dataMgr.markForUpdate(this);
+		ManagedReference<Item> itemRef = dataMgr.createReference(item);
+		this.showAllItemsInTheRoom();
+		return items.add(itemRef);
+
+	}
+
+	public void showAllItemsInTheRoom() {
+//		StringBuilder itemsOnTheGround = new StringBuilder(
+//				"Items produced by system, in the room :");
+//		itemsOnTheGround.append(items.size());
+//
+//		itemsOnTheGround.append("\n");
+//		itemsOnTheGround.append(getObjectName());
+//		itemsOnTheGround.append("\n ------------------------------\n");
+//
+//		for (ManagedReference<Item> itemRef : items) {
+//			itemsOnTheGround.append(itemRef.get());
+//			itemsOnTheGround.append("\n");
+//		}
+//		itemsOnTheGround.append("------------------------------\n");
+
+		logger.log(Level.INFO, this.toString());
+	}
+
+	public  String toString(){
+		StringBuilder itemsOnTheGround = new StringBuilder(
+				"Items produced by system, in the room :");
+		itemsOnTheGround.append(items.size());
+
+		itemsOnTheGround.append("\n");
+		itemsOnTheGround.append(getObjectName());
+		itemsOnTheGround.append("\n");
+
+		itemsOnTheGround.append(" ------------------------------\n");
+
+		for (ManagedReference<Item> itemRef : items) {
+			itemsOnTheGround.append(itemRef.get());
+			itemsOnTheGround.append("\n");
+		}
+		itemsOnTheGround.append("------------------------------\n");
+		
+		return itemsOnTheGround.toString();
+	}
 	/**
 	 * Adds a player to this room.
 	 * 
@@ -88,7 +137,7 @@ public class Room extends CoreManagedObjects {
 		DataManager dataManager = AppContext.getDataManager();
 		dataManager.markForUpdate(this);
 
-		return players.add(dataManager.createReference(player));
+		return playersSet.add(dataManager.createReference(player));
 	}
 
 	/**
@@ -104,23 +153,25 @@ public class Room extends CoreManagedObjects {
 		DataManager dataManager = AppContext.getDataManager();
 		dataManager.markForUpdate(this);
 
-		return players.remove(dataManager.createReference(player));
+		return playersSet.remove(dataManager.createReference(player));
 	}
 
-	public String showPlayersPositions(GamePlayerClientSessionListener player) {
-		logger.log(Level.INFO, "{0} sypl {1}", new Object[] { player, this });
-
-		String output = "";
-
-		List<GamePlayerClientSessionListener> otherPlayers = getPlayersExcluding(player);
-		Iterator<GamePlayerClientSessionListener> it = otherPlayers.iterator();
-		while (it.hasNext()) {
-			GamePlayerClientSessionListener p = it.next();
-			output += "2/" + p.getTempPosX() + "/" + p.getTempPosY() + "-";
-		}
-
-		return output.toString();
-	}
+	// public String showPlayersPositions(GamePlayerClientSessionListener
+	// player) {
+	// logger.log(Level.INFO, "{0} sypl {1}", new Object[] { player, this });
+	//
+	// String output = "";
+	//
+	// List<GamePlayerClientSessionListener> otherPlayers =
+	// getPlayersExcluding(player);
+	// Iterator<GamePlayerClientSessionListener> it = otherPlayers.iterator();
+	// while (it.hasNext()) {
+	// GamePlayerClientSessionListener p = it.next();
+	// output += "2/" + p.getTempPosX() + "/" + p.getTempPosY() + "-";
+	// }
+	//
+	// return output.toString();
+	// }
 
 	/**
 	 * Returns a description of what the given player sees in this room.
@@ -145,8 +196,12 @@ public class Room extends CoreManagedObjects {
 			appendPrettyList(output, otherPlayers);
 			output.append(".\n");
 		} else {
-			output.append("nobody here but you");
+			output.append("nobody here but you/n");
 		}
+		output.append("items in this room, on the ground /n");
+		output.append(this.toString());
+		this.showAllItemsInTheRoom();
+		// show all items on the ground
 
 		return output.toString();
 	}
@@ -170,18 +225,18 @@ public class Room extends CoreManagedObjects {
 	 *            the list of items to format
 	 */
 	private void appendPrettyList(StringBuilder builder,
-			List<? extends CoreManagedObjects> list) {
+			List<? extends GameManagedObjects> list) {
 		if (list.isEmpty()) {
 			return;
 		}
 
 		int lastIndex = list.size() - 1;
-		CoreManagedObjects last = list.get(lastIndex);
+		GameManagedObjects last = list.get(lastIndex);
 
-		Iterator<? extends CoreManagedObjects> it = list.subList(0, lastIndex)
+		Iterator<? extends GameManagedObjects> it = list.subList(0, lastIndex)
 				.iterator();
 		if (it.hasNext()) {
-			CoreManagedObjects other = it.next();
+			GameManagedObjects other = it.next();
 			builder.append(other.getObjectName());
 			while (it.hasNext()) {
 				other = it.next();
@@ -202,15 +257,16 @@ public class Room extends CoreManagedObjects {
 	 */
 	private List<GamePlayerClientSessionListener> getPlayersExcluding(
 			GamePlayerClientSessionListener player) {
-		if (players.isEmpty()) {
+		if (playersSet.isEmpty()) {
 			return Collections.emptyList();
 		}
 
 		ArrayList<GamePlayerClientSessionListener> otherPlayers = new ArrayList<GamePlayerClientSessionListener>(
-				players.size());
+				playersSet.size());
 
-		for (ManagedReference<GamePlayerClientSessionListener> playerRef : players) {
+		for (ManagedReference<GamePlayerClientSessionListener> playerRef : playersSet) {
 			GamePlayerClientSessionListener other = playerRef.get();
+			// if the exists plater not equals youself
 			if (!player.equals(other)) {
 				otherPlayers.add(other);
 			}

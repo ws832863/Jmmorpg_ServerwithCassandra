@@ -1,6 +1,6 @@
 package game.darkstar.network;
 
-import game.systems.MessageHandler;
+import game.systems.ChannelMessageHandler;
 
 import java.io.Serializable;
 import java.nio.ByteBuffer;
@@ -23,7 +23,7 @@ public class GameChannelsListener implements Serializable, ChannelListener {
 	public void receivedMessage(Channel channel, ClientSession session,
 			ByteBuffer message) {
 
-		MessageHandler msgHandler = new MessageHandler();
+		ChannelMessageHandler msgHandler = new ChannelMessageHandler();
 		msgHandler.handleMessage(channel, session, message);
 
 	}
