@@ -1,9 +1,9 @@
 package game.cassandra.Factorys;
 
-import java.security.SecureRandom;
-
 import game.cassandra.data.GamePlayer;
 import game.cassandra.utils.Utils;
+
+import java.util.UUID;
 
 public class GamePlayerFactory {
 
@@ -38,7 +38,7 @@ public class GamePlayerFactory {
 		player.setTrueName(Utils.getRandomString(5));
 		player.setMapId(1);
 
-		player.setLoginId(Utils.getRandomInt(1000000));
+		player.setUUIDString(UUID.randomUUID().toString());
 		player.setUserName(Utils.getRandomString(6));
 		player.setUserPassword("player");
 
@@ -68,7 +68,7 @@ public class GamePlayerFactory {
 		player.setTrueName(Utils.getRandomString(5));
 		player.setMapId(1);
 
-		player.setLoginId(Utils.getRandomInt(1000000));
+		player.setUUIDString(UUID.randomUUID().toString());
 		player.setUserName(username);
 		player.setUserPassword(password);
 

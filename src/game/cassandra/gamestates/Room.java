@@ -21,6 +21,7 @@
 
 package game.cassandra.gamestates;
 
+import game.cassandra.data.ManagedReferenceList;
 import game.darkstar.network.GamePlayerClientSessionListener;
 
 import java.io.UnsupportedEncodingException;
@@ -31,6 +32,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -54,11 +56,13 @@ public class Room extends GameManagedObjects {
 	private static final Logger logger = Logger.getLogger(Room.class.getName());
 
 	/** The set of items in this room */
-	private final Set<ManagedReference<Item>> items = new HashSet<ManagedReference<Item>>();
+	private final Vector<ManagedReference<Item>> items = new Vector<ManagedReference<Item>>();
 
 	/** The set of players in this room. */
-	private final Set<ManagedReference<GamePlayerClientSessionListener>> playersSet = new HashSet<ManagedReference<GamePlayerClientSessionListener>>();
+	private final Vector<ManagedReference<GamePlayerClientSessionListener>> playersSet = new Vector<ManagedReference<GamePlayerClientSessionListener>>();
 
+	private ManagedReferenceList itemsList = new ManagedReferenceList();
+	
 	/** The message encoding. */
 	public static final String MESSAGE_CHARSET = "UTF-8";
 
@@ -88,24 +92,24 @@ public class Room extends GameManagedObjects {
 	}
 
 	public void showAllItemsInTheRoom() {
-//		StringBuilder itemsOnTheGround = new StringBuilder(
-//				"Items produced by system, in the room :");
-//		itemsOnTheGround.append(items.size());
-//
-//		itemsOnTheGround.append("\n");
-//		itemsOnTheGround.append(getObjectName());
-//		itemsOnTheGround.append("\n ------------------------------\n");
-//
-//		for (ManagedReference<Item> itemRef : items) {
-//			itemsOnTheGround.append(itemRef.get());
-//			itemsOnTheGround.append("\n");
-//		}
-//		itemsOnTheGround.append("------------------------------\n");
+		// StringBuilder itemsOnTheGround = new StringBuilder(
+		// "Items produced by system, in the room :");
+		// itemsOnTheGround.append(items.size());
+		//
+		// itemsOnTheGround.append("\n");
+		// itemsOnTheGround.append(getObjectName());
+		// itemsOnTheGround.append("\n ------------------------------\n");
+		//
+		// for (ManagedReference<Item> itemRef : items) {
+		// itemsOnTheGround.append(itemRef.get());
+		// itemsOnTheGround.append("\n");
+		// }
+		// itemsOnTheGround.append("------------------------------\n");
 
 		logger.log(Level.INFO, this.toString());
 	}
 
-	public  String toString(){
+	public String toString() {
 		StringBuilder itemsOnTheGround = new StringBuilder(
 				"Items produced by system, in the room :");
 		itemsOnTheGround.append(items.size());
@@ -121,9 +125,10 @@ public class Room extends GameManagedObjects {
 			itemsOnTheGround.append("\n");
 		}
 		itemsOnTheGround.append("------------------------------\n");
-		
+
 		return itemsOnTheGround.toString();
 	}
+
 	/**
 	 * Adds a player to this room.
 	 * 
@@ -154,6 +159,20 @@ public class Room extends GameManagedObjects {
 		dataManager.markForUpdate(this);
 
 		return playersSet.remove(dataManager.createReference(player));
+	}
+
+	public void destoryExpiretItem() {
+		DataManager dataManager = AppContext.getDataManager();
+		dataManager.markForUpdate(this);
+		for (ManagedReference<Item> itemRef : items) {
+			if ((System.currentTimeMillis() - itemRef.get().getProduceTime()) > 10000) {
+
+				logger.log(Level.INFO, "Item {0} expired,will be destoryed ",
+						itemRef.get());
+				items.remove(itemRef);
+				dataManager.removeObject(itemRef.get());
+			}
+		}
 	}
 
 	// public String showPlayersPositions(GamePlayerClientSessionListener

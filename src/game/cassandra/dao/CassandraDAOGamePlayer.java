@@ -277,9 +277,8 @@ public class CassandraDAOGamePlayer {
 		int i = 0;
 		for (GamePlayer gp : listGp) {
 
-			CassandraDAOGamePlayer.addInsseration(mutator,
-					String.valueOf(gp.getLoginId()), gp.getUserName(),
-					gp.getUserPassword(), gp.getRegistDate(),
+			CassandraDAOGamePlayer.addInsseration(mutator, gp.getUUIDString(),
+					gp.getUserName(), gp.getUserPassword(), gp.getRegistDate(),
 					gp.getLastActiveIp(), gp.getLastActiceDate(),
 					gp.getTrueName(), gp.getEmail(), gp.getBirth(),
 					String.valueOf(gp.getMapId()), gp.getHeroClass(),
@@ -310,11 +309,10 @@ public class CassandraDAOGamePlayer {
 		Mutator<String> mutator = columnFamilyTemplate.createMutator();
 
 		CassandraDAOGamePlayer
-				.addInsseration(mutator, String.valueOf(gp.getLoginId()),
-						gp.getUserName(), gp.getUserPassword(),
-						gp.getRegistDate(), gp.getLastActiveIp(),
-						gp.getLastActiceDate(), gp.getTrueName(),
-						gp.getEmail(), gp.getBirth(),
+				.addInsseration(mutator, gp.getUUIDString(), gp.getUserName(),
+						gp.getUserPassword(), gp.getRegistDate(),
+						gp.getLastActiveIp(), gp.getLastActiceDate(),
+						gp.getTrueName(), gp.getEmail(), gp.getBirth(),
 						String.valueOf(gp.getMapId()), gp.getHeroClass(),
 						gp.getHeroRace(), String.valueOf(gp.getCurrHp()),
 						String.valueOf(gp.getMaxHp()),
@@ -332,7 +330,7 @@ public class CassandraDAOGamePlayer {
 	private GamePlayer mappingHashMapIntoGamePlayerObject(String rowkey,
 			HashMap<String, String> h) {
 		GamePlayer gp = new GamePlayer();
-		gp.setLoginId(Integer.valueOf(rowkey));
+		gp.setUUIDString(rowkey);
 		gp.setUserName(h.get("username"));
 		gp.setUserPassword(h.get("userpassword"));
 		gp.setRegistDate(h.get("registdate"));
@@ -640,15 +638,15 @@ public class CassandraDAOGamePlayer {
 		// CassandraDAOGamePlayer.createGamePlayerSchema();
 		// CassandraDAOGamePlayer.GamePlayerPrePopulate();
 		CassandraDAOGamePlayer cdp = new CassandraDAOGamePlayer();
-		// cdp.selectAll();
+		cdp.selectAll();
 		// cdp.selectByPk(5);
 		// cdp.selectByLoginName("player1");
 		// cdp.testVectorClans();
-		List<GamePlayer> ll = new ArrayList<GamePlayer>();
-		for (int i = 0; i < 1000; i++) {
-			ll.add(GamePlayerFactory.createPlayer());
+		// List<GamePlayer> ll = new ArrayList<GamePlayer>();
+		// for (int i = 0; i < 1000; i++) {
+		// ll.add(GamePlayerFactory.createPlayer());
 
-		}
-		cdp.addNewGamePlayer(ll);
+		// }
+		// cdp.addNewGamePlayer(ll);
 	}
 }

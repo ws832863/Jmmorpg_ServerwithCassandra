@@ -329,8 +329,8 @@ public class CassandraDAOMap {
 
 	// used for test this class
 	public static void main(String[] str) {
-		//CassandraDAOMap.createMapSchema();
-		//CassandraDAOMap.prepopulateMapData();
+		CassandraDAOMap.createMapSchema();
+		CassandraDAOMap.prepopulateMapData();
 		CassandraDAOMap dao = new CassandraDAOMap();
 		dao.selectAll();
 		dao.testVectorMaps();

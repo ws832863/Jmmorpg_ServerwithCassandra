@@ -1,6 +1,7 @@
 package game.cassandra.gamestates;
 
-import com.sun.sgs.app.AppContext;
+import game.cassandra.Factorys.EquipmentFactory;
+
 
 public class Armor extends Item {
 
@@ -42,5 +43,15 @@ public class Armor extends Item {
 		sbArmor.append("|| owner Id :");
 		sbArmor.append(owner_id);
 		return sbArmor.toString();
+	}
+	public static void main(String[] args){
+		Armor a1=EquipmentFactory.createArmor();
+		Armor a2=EquipmentFactory.createArmor();
+		Armor a3=EquipmentFactory.createArmor();
+		a3.setUUIDString(a1.getUUIDString());
+		
+		System.out.println(a1.equals(a2));
+		System.out.println(a1.equals(a3));
+		
 	}
 }

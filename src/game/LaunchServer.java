@@ -1,17 +1,14 @@
 package game;
 
-import game.cassandra.dao.CassandraDAOGamePlayer;
 import game.cassandra.dao.CassandraDAOMap;
 import game.cassandra.dao.UserLoginHelper;
 import game.cassandra.data.GamePlayer;
 import game.cassandra.data.Map;
-import game.cassandra.data.PlayerInventory;
 import game.cassandra.gamestates.Room;
 import game.darkstar.network.GameChannelsListener;
 import game.darkstar.network.GamePlayerClientSessionListener;
 import game.drakstar.task.ProduceItemInTheRoom;
-import game.drakstar.task.TestATask;
-import game.systems.GlobalPlayersControl;
+import game.drakstar.task.TaskDestoryExpiredItem;
 
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
@@ -104,7 +101,6 @@ public class LaunchServer implements AppListener, Serializable {
 		this.channels = new HashSet<ManagedReference<Channel>>();
 		this.rooms = new HashSet<ManagedReference<Room>>();
 
-
 		logger.info("Initialing all gamestate in the gameword ,only once-------LaunchServer");
 
 		// read the map information in the database, and create all room for
@@ -143,11 +139,12 @@ public class LaunchServer implements AppListener, Serializable {
 			System.out.println("Room" + map.getId());
 
 			logger.info("runnning periodic task");
-			
-			
+
 			// schedule the task
-			TaskManager tm = AppContext.getTaskManager();
-			tm.schedulePeriodicTask(new ProduceItemInTheRoom(r), 0, 10000);
+			 TaskManager tm = AppContext.getTaskManager();
+			 tm.schedulePeriodicTask(new ProduceItemInTheRoom(r), 0, 5000);
+			 tm.schedulePeriodicTask(new TaskDestoryExpiredItem(r), 0, 1000);
+
 		}
 
 		logger.info("-- JMMORPG Initialized ---");
@@ -171,7 +168,6 @@ public class LaunchServer implements AppListener, Serializable {
 
 			return null;
 		}
-		
 
 		// connect this session with map_x channel, all players in this
 		// channel
@@ -182,7 +178,7 @@ public class LaunchServer implements AppListener, Serializable {
 
 		channel.send(
 				null,
-				encodeString("m/" + gamePlayer.getLoginId() + "/"
+				encodeString("m/" + gamePlayer.getUUIDString() + "/"
 						+ gamePlayer.getClassId() + "/"
 						+ gamePlayer.getUserName() + "/"
 						+ map.getStartTileHeroPosX() + "/"
@@ -202,9 +198,7 @@ public class LaunchServer implements AppListener, Serializable {
 
 		// add this player to one channel, it depends which room is
 		// player in
-	
-		
-		
+
 		AppContext.getChannelManager()
 				.getChannel("map_" + gamePlayer.getMapId()).join(session);
 
@@ -214,7 +208,7 @@ public class LaunchServer implements AppListener, Serializable {
 		 */
 		channel.send(
 				null,
-				encodeString("m/" + gamePlayer.getLoginId() + "/"
+				encodeString("m/" + gamePlayer.getUUIDString() + "/"
 						+ gamePlayer.getClassId() + "/"
 						+ gamePlayer.getUserName() + "/"
 						+ map.getStartTileHeroPosX() + "/"

@@ -224,7 +224,7 @@ public class GamePlayerClientSessionListener extends GameManagedObjects
 		Channel channel = AppContext.getChannelManager().getChannel(
 				"map_" + playerRef.get().getMapId());
 		channel.send(null, encodeString("m/loggout/"
-				+ playerRef.get().getLoginId() + "/"));
+				+ playerRef.get().getUUIDString() + "/"));
 
 		logger.log(Level.INFO, "Disconnected: {0}", this);
 

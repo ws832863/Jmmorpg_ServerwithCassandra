@@ -24,6 +24,7 @@ public class ProduceItemInTheRoom implements Task, Serializable {
 	public void run() throws Exception {
 
 		roomRef.get().addItem(EquipmentFactory.createRandomGameItem());
+		
 	}
 
 }

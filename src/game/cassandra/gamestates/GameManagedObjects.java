@@ -62,6 +62,7 @@ public class GameManagedObjects
         return objetcName;
     }
     public void destoryMe(){
+    	
     }
 
     /** {@inheritDoc} */

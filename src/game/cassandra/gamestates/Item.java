@@ -1,6 +1,8 @@
 package game.cassandra.gamestates;
 
 import java.io.Serializable;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import com.sun.sgs.app.AppContext;
 import com.sun.sgs.app.ManagedObject;
@@ -12,7 +14,7 @@ import com.sun.sgs.app.ManagedObject;
  * @author parallels
  * 
  */
-public abstract class Item implements Serializable, ManagedObject {
+public class Item implements Serializable, ManagedObject {
 
 	/**
 	 * 
@@ -22,16 +24,24 @@ public abstract class Item implements Serializable, ManagedObject {
 	protected int price;
 	protected String owner_id = null;
 	protected String description;
+	protected String uuidString = null;
+	protected long produceTime;
+	protected long existsTime = 10000;
 
 	public Item(int price, String ownerId, String description) {
 		this.price = price;
 		this.owner_id = ownerId;
 		this.description = description;
+		this.uuidString = UUID.randomUUID().toString();
+		produceTime = System.currentTimeMillis();
 	}
 
 	public Item() {
 		price = 100;
 		description = "A undescripted Item";
+		this.uuidString = UUID.randomUUID().toString();
+		produceTime = System.currentTimeMillis();
+
 	}
 
 	/*
@@ -80,7 +90,71 @@ public abstract class Item implements Serializable, ManagedObject {
 	}
 
 	public String toString() {
-		return "A Item: " + description + ", price : " + price;
+		return "A Item("
+				+ getUUIDString()
+				+ "): "
+				+ description
+				+ ", price : "
+				+ price
+				+ " expiredTime"
+				+ (this.existsTime - System.currentTimeMillis() - this.produceTime);
+	}
+
+	public String getUUIDString() {
+		return this.uuidString;
+	}
+
+	public void setUUIDString(String str) {
+		this.uuidString = str;
+	}
+
+	public void destoryMe() {
+		if (this.owner_id.equals("System")) {
+			AppContext.getDataManager().removeObject(this);
+		}
+	}
+
+	/*
+	 * all equipment exists 10 second, then destory it
+	 */
+	public boolean expired() {
+		boolean flag = false;
+		if ((System.currentTimeMillis() - this.produceTime) > this.existsTime) {
+			flag = true;
+		}
+		return flag;
+	}
+
+	public long getProduceTime() {
+		return this.produceTime;
+	}
+
+	public boolean equals(Item item) {
+		boolean flag = false;
+		if (item.getUUIDString().equals(this.getUUIDString()))
+			flag = true;
+		return flag;
+
+	}
+
+	public static void main(String[] args) throws InterruptedException {
+
+		Item i1 = new Item();
+		Item i2 = new Item();
+		Item i3 = new Item();
+		long produceTime;
+		long existsTime = 10000;
+		long now = System.currentTimeMillis();
+
+		for (int i = 0; i < 20; i++) {
+
+			System.out.println(i1.expired());
+			TimeUnit.MILLISECONDS.sleep(1000);
+		}
+		System.out.println(i1);
+		System.out.println(i2);
+		System.out.println(i3);
+
 	}
 
 }
