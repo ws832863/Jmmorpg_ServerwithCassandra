@@ -4,13 +4,11 @@ import game.cassandra.data.GamePlayer;
 import game.cassandra.data.PlayerInventory;
 import game.cassandra.gamestates.GameManagedObjects;
 import game.cassandra.gamestates.Room;
-import game.systems.GlobalPlayersControl;
 import game.systems.MessageHandler;
 
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -198,15 +196,24 @@ public class GamePlayerClientSessionListener extends GameManagedObjects
 				this, command });
 
 		if (command.equalsIgnoreCase("look")) {
+
 			String reply = getRoom().look(this);
-			getSession().send(encodeString(reply));
+			sendClientMessage(getSession(), reply);
 		} else if (command.equalsIgnoreCase("inventory")) {
-			getSession()
-					.send(encodeString("my inventory: "
-							+ getPlayer().getInventory()));
+
+			StringBuilder sb = new StringBuilder();
+			sb.append("return maximal 100 items in your Inventory");
+			sb.append(getPlayer().getInventory());
+			sendClientMessage(getSession(), sb.toString());
+
 		} else {
 			handler.handleMessage(this, command);
 		}
+
+	}
+
+	public void sendClientMessage(ClientSession cs, String message) {
+		getSession().send(encodeString(message));
 
 	}
 
@@ -280,6 +287,11 @@ public class GamePlayerClientSessionListener extends GameManagedObjects
 		currentRoomRef = dataManager.createReference(room);
 	}
 
+	/**
+	 * set Gameplayer reference
+	 * 
+	 * @param player
+	 */
 	protected void setPlayer(GamePlayer player) {
 		DataManager dataManager = AppContext.getDataManager();
 		dataManager.markForUpdate(this);

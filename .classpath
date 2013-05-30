@@ -13,5 +13,7 @@
 	<classpathentry kind="lib" path="libs/sgs-shared-1.12.jar" sourcepath="/home/parallels/sgs-server-dist-0.10.2.1/src/sgs-shared-1.12-sources.jar"/>
 	<classpathentry kind="lib" path="libs/jung-graph-impl-2.0.jar"/>
 	<classpathentry exported="true" kind="con" path="org.eclipse.jdt.USER_LIBRARY/Cassandra-Hectorclient"/>
+	<classpathentry kind="lib" path="/home/parallels/sgs-server-dist-0.10.2.1/tutorial/tutorial.jar"/>
+	<classpathentry kind="lib" path="/home/parallels/sgs-server-dist-0.10.2.1/deploy/JMMORPG_SERVER.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

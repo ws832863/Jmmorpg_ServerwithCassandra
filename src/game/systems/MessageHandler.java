@@ -7,7 +7,6 @@ import game.cassandra.utils.Utils;
 import game.darkstar.network.GamePlayerClientSessionListener;
 
 import java.io.Serializable;
-import java.nio.ByteBuffer;
 
 import com.sun.sgs.app.AppContext;
 import com.sun.sgs.app.ClientSession;
