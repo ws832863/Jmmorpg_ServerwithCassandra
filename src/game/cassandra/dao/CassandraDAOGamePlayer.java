@@ -1,10 +1,8 @@
 package game.cassandra.dao;
 
-import game.cassandra.Factorys.GamePlayerFactory;
 import game.cassandra.conn.CassandraConnection;
 import game.cassandra.data.GamePlayer;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;

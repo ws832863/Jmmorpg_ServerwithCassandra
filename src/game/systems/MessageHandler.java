@@ -1,14 +1,17 @@
 package game.systems;
 
+import game.cassandra.Factorys.EquipmentFactory;
+import game.cassandra.data.PlayerInventory;
+import game.cassandra.gamestates.Item;
 import game.cassandra.utils.Utils;
 import game.darkstar.network.GamePlayerClientSessionListener;
 
 import java.io.Serializable;
 import java.nio.ByteBuffer;
-import java.util.logging.Logger;
 
-
+import com.sun.sgs.app.AppContext;
 import com.sun.sgs.app.ClientSession;
+import com.sun.sgs.app.DataManager;
 import com.sun.sgs.app.ManagedReference;
 
 public class MessageHandler implements Serializable {
@@ -17,74 +20,98 @@ public class MessageHandler implements Serializable {
 	 * 
 	 */
 	private static final long serialVersionUID = 7909343275679216917L;
-	
-	//private Logger logger = Logger.getLogger(MessageHandler.class.getName());
-	
+
+	// private Logger logger = Logger.getLogger(MessageHandler.class.getName());
+
 	private ManagedReference<ClientSession> sessionRef = null;
 	private ManagedReference<GamePlayerClientSessionListener> playerSessionRef = null;
+	private ManagedReference<PlayerInventory> inventoryRef = null;
 
 	/**
 	 * @param args
 	 */
+	public MessageHandler(GamePlayerClientSessionListener gcl) {
+		playerSessionRef = AppContext.getDataManager().createReference(gcl);
+		sessionRef = AppContext.getDataManager().createReference(
+				playerSessionRef.get().getSession());
+	}
 
-	public void handleMessage(GamePlayerClientSessionListener playerSession,
-			ByteBuffer message) {
-		String decodeMsg = Utils.decodeByteBufferToString(message);
-		System.out.println("a message from client  " + decodeMsg);
-		String msg[] = decodeMsg.split("/");
+	public MessageHandler() {
 
-		if (msg[0].toLowerCase().equals("/look")) {
-			this.handleChatMessage(msg);
-		} else if (msg[0].toLowerCase().equals("m")) {
-			this.handleMovementMessage(msg);
-		} else if (msg[0].toLowerCase().equals("trade")) {
-			this.handleTradeMessage(msg);
+	}
+
+	public void handleMessage(GamePlayerClientSessionListener gcl,
+			String message) {
+
+		playerSessionRef = AppContext.getDataManager().createReference(gcl);
+		sessionRef = AppContext.getDataManager().createReference(
+				playerSessionRef.get().getSession());
+
+		String decodeMsg = message;// Utils.decodeByteBufferToString(message);
+
+		if (decodeMsg.toLowerCase().equals("look")) {
+			this.handleLookaroundMessage(decodeMsg);
+		} else if (decodeMsg.toLowerCase().equals("buy")) {
+			this.handleBuyMessage(decodeMsg);
+		} else if (decodeMsg.toLowerCase().equals("sell")) {
+			this.handleSellMessage(decodeMsg);
 		} else {
-	//		logger.info("Unsupport Command");
-			this.handleUnSupportMessage(msg);
+			// logger.info("Unsupport Command");
+			this.handleUnSupportMessage(decodeMsg);
 		}
 	}
 
-	public void handleChatMessage(String message[]) {
-		StringBuilder sb = new StringBuilder("");
-		for (String s : message) {
-			sb.append(s);
-			sb.append("/");
-		}
-	//	logger.info("Handle a <Chat> Message  " + sb.toString());
-		getSession().send(Utils.encodeStringToByteBuffer(sb.toString()));
-	}
-
-	public void handleMovementMessage(String message[]) {
-		StringBuilder sb = new StringBuilder("");
-		for (String s : message) {
-			sb.append(s);
-			sb.append("/");
-		}
-	//	logger.info("Handle a <move> Message   " + sb.toString());
-		getSession().send(Utils.encodeStringToByteBuffer(sb.toString()));
+	public void handleLookaroundMessage(String message) {
+		getSession().send(
+				Utils.encodeStringToByteBuffer("you send a command :"
+						+ message.toString()));
 
 	}
 
-	public void handleTradeMessage(String message[]) {
-		StringBuilder sb = new StringBuilder("");
-		for (String s : message) {
-			sb.append(s);
-			sb.append("/");
-		}
-	//	logger.info("Handle a <Trade> Message   " + sb.toString());
-		getSession().send(Utils.encodeStringToByteBuffer(sb.toString()));
+	public void handleBuyMessage(String message) {
+		DataManager dm = AppContext.getDataManager();
+		inventoryRef = dm.createReference(playerSessionRef.get().getPlayer()
+				.getInventory());
+		dm.markForUpdate(inventoryRef.get());
+		ManagedReference<Item> itemRef = dm.createReference(EquipmentFactory
+				.createRandomGameItem());
+		inventoryRef.get().add(itemRef.get());
+		getSession().send(
+				Utils.encodeStringToByteBuffer("you have bought a:"
+						+ itemRef.get().toString()));
 
 	}
 
-	public void handleUnSupportMessage(String message[]) {
-		StringBuilder sb = new StringBuilder("");
-		for (String s : message) {
-			sb.append(s);
-			sb.append("/");
+	public void handleSellMessage(String message) {
+		DataManager dm = AppContext.getDataManager();
+		inventoryRef = dm.createReference(playerSessionRef.get().getPlayer()
+				.getInventory());
+		dm.markForUpdate(inventoryRef.get());
+
+		if (inventoryRef.get().getFirstItem() != null) {
+			ManagedReference<Item> item = dm.createReference(inventoryRef.get()
+					.getFirstItem());
+			System.out.println("delete this" + item.get().toString());
+			inventoryRef.get().delete(item.get());
+			getSession().send(
+					Utils.encodeStringToByteBuffer("deleted sucessful"));
+		} else {
+			getSession().send(
+					Utils.encodeStringToByteBuffer("you have nothing to sell"));
 		}
-	//	logger.info("Handle a <UnSupport> Message   " + sb.toString());
-		getSession().send(Utils.encodeStringToByteBuffer(sb.toString()));
+	}
+
+	public void handleUnSupportMessage(String message) {
+
+		getSession().send(
+				Utils.encodeStringToByteBuffer("you send a unsupport command :"
+						+ message.toString()
+						+ "supported command(#look #buy #sell #inventory)"));
+		// getSession()
+		// .send(encodeString("you send a unsupport command("
+		// + command
+		// +
+		// "), currently only <look> support, you can type look to check other players around here"));
 
 	}
 

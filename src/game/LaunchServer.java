@@ -141,9 +141,9 @@ public class LaunchServer implements AppListener, Serializable {
 			logger.info("runnning periodic task");
 
 			// schedule the task
-			 TaskManager tm = AppContext.getTaskManager();
-			 tm.schedulePeriodicTask(new ProduceItemInTheRoom(r), 0, 5000);
-			 tm.schedulePeriodicTask(new TaskDestoryExpiredItem(r), 0, 1000);
+			// TaskManager tm = AppContext.getTaskManager();
+			// tm.schedulePeriodicTask(new ProduceItemInTheRoom(r), 0, 3000);
+			// tm.schedulePeriodicTask(new TaskDestoryExpiredItem(r), 0, 20000);
 
 		}
 
@@ -154,10 +154,19 @@ public class LaunchServer implements AppListener, Serializable {
 	@Override
 	public ClientSessionListener loggedIn(ClientSession session) {
 
+		/*
+		 * first create a instance of Gameplayer by using the session name
+		 * specified by user. if the specified name can be found in cassandra,
+		 * then create a Gameplayer instance which represent a user, and the
+		 * data of gameplayer will be read from database instead of darkstar
+		 */
 		String name = session.getName();
 		logger.log(Level.INFO, "JMMORPG Client trying to login: {0}", name);
 		UserLoginHelper check = new UserLoginHelper();
+		// check if the user exists in cassandra,not check the password,only
+		// searching the username
 		GamePlayer gamePlayer = check.checkUser(name, "player");
+		// a map instance, represent which map are the user currently in.
 		Map map = null;
 
 		// the users exists and get the gameplayer information from database
@@ -165,47 +174,45 @@ public class LaunchServer implements AppListener, Serializable {
 			session.send(encodeString(check.verfiedString()));
 			map = check.getMap();
 		} else {
-
+			// if we can't find a user, return null, the the client will receive
+			// a login failed information
 			return null;
 		}
+		// end of create Gameplayer instance
 
-		// connect this session with map_x channel, all players in this
-		// channel
-		// will see the status changes of other users also in the same
-		// channel
+		// we get the user from database, then send the user position
+		// let the user join a channel, map_x x is the map id,which the user
+		// last time in.
+		AppContext.getChannelManager()
+				.getChannel("map_" + gamePlayer.getMapId()).join(session);
 		Channel channel = AppContext.getChannelManager().getChannel(
 				"map_" + gamePlayer.getMapId());
 
-		channel.send(
-				null,
-				encodeString("m/" + gamePlayer.getUUIDString() + "/"
-						+ gamePlayer.getClassId() + "/"
-						+ gamePlayer.getUserName() + "/"
-						+ map.getStartTileHeroPosX() + "/"
-						+ map.getStartTileHeroPosY() + "/" + map.getPosition()
-						+ "/"));
+		// a implementation of ClientSessionListener, it holds the Gameplayer
+		// instance and playerinventory instance, a Clientsession reprentes a
+		// complete user
 		GamePlayerClientSessionListener SessionPlayer = null;
-
+		// trying to find the user in darkstar memory,if not find,will create a
+		// new instance but we will delete the user from darkstar memory every
+		// time when user disconnect.
+		// this login method are also used to set the client session. then we
+		// can invoke
+		// getSession() to get a current clientsession
 		SessionPlayer = GamePlayerClientSessionListener.loggedIn(session);
-
-		// in the mean time the players inventory will be set
+		// in the mean time the players inventory will be set//gameplayer hold a
+		// inventory instance
 		SessionPlayer.setPlayerRef(AppContext.getDataManager().createReference(
 				gamePlayer));
 
-		// Put player in room.
+		// Put player in a specific room which the player last time in
 		SessionPlayer
 				.enter(getRoom("Room" + gamePlayer.getMapId()), gamePlayer);
 
-		// add this player to one channel, it depends which room is
-		// player in
-
-		AppContext.getChannelManager()
-				.getChannel("map_" + gamePlayer.getMapId()).join(session);
-
 		/*
 		 * when user logined in ,send the lasted postions of this user via
-		 * channel.
+		 * channel to all users in this channel
 		 */
+
 		channel.send(
 				null,
 				encodeString("m/" + gamePlayer.getUUIDString() + "/"
@@ -214,6 +221,7 @@ public class LaunchServer implements AppListener, Serializable {
 						+ map.getStartTileHeroPosX() + "/"
 						+ map.getStartTileHeroPosY() + "/" + map.getPosition()
 						+ "/"));
+
 		// return player object as listener to this client session
 		return SessionPlayer;
 	}

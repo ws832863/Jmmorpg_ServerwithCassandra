@@ -11,9 +11,11 @@ import com.sun.sgs.app.ClientSession;
 public class ChannelMessageHandler {
 	/** The message encoding. */
 	private static final String MESSAGE_CHARSET = "UTF-8";
-	private Logger logger = Logger.getLogger(ChannelMessageHandler.class.getName());
+	private Logger logger = Logger.getLogger(ChannelMessageHandler.class
+			.getName());
 	private Channel channel;
 	private ClientSession clientSession;
+	private String msg;
 
 	/**
 	 * a class to handle the message from client and server
@@ -28,63 +30,42 @@ public class ChannelMessageHandler {
 		channel = cnl;
 		clientSession = session;
 		String decodeMsg = decodeByteBufferToString(message);
-		System.out.println("a message from client  " + decodeMsg
+		System.out.println("A message from client  " + session.getName()
 				+ "   on channel " + cnl.getName());
-		String msg[] = decodeMsg.split("/");
 
-		if (msg[0].toLowerCase().equals("chat")) {
-			this.handleChatMessage(msg);
-		} else if (msg[0].toLowerCase().equals("m")) {
-			this.handleMovementMessage(msg);
-		} else if (msg[0].toLowerCase().equals("trade")) {
-			this.handleTradeMessage(msg);
+		if (decodeMsg.startsWith("m/")) {
+			handleMovementMessage(decodeMsg);
+			// cnl.send(session, encodeStringToByteBuffer(decodeMsg));
+		} else if (decodeMsg.startsWith("chat/")) {
+			handleChatMessage(decodeMsg);
 		} else {
-			logger.info("Unsupport Command");
-			this.handleUnSupportMessage(msg);
+			// wrap a normal message to chat message
+			decodeMsg = "chat/" + session.getName() + ":" + decodeMsg;
+			handleUnSupportMessage(decodeMsg);
 		}
+	}
+
+	public void handleChatMessage(String message) {
+		// chat/username: messagebody
+
+		logger.info("Handle a <Chat> Message  " + message.toString());
+
+		channel.send(clientSession, encodeStringToByteBuffer(message));
 
 	}
 
-	public void handleChatMessage(String message[]) {
-		StringBuilder sb = new StringBuilder("");
-		for (String s : message) {
-			sb.append(s);
-			sb.append("/");
-		}
-		logger.info("Handle a <Chat> Message  " + sb.toString());
-		channel.send(clientSession, encodeStringToByteBuffer(sb.toString()));
-	}
+	public void handleMovementMessage(String message) {
+		// the move message from gui channel, null mean the message will not
+		// send back to the sender client
 
-	public void handleMovementMessage(String message[]) {
-		StringBuilder sb = new StringBuilder("");
-		for (String s : message) {
-			sb.append(s);
-			sb.append("/");
-		}
-		logger.info("Handle a <move> Message   " + sb.toString());
-		channel.send(clientSession, encodeStringToByteBuffer(sb.toString()));
+		logger.info("Handle a <move> Message   " + message);
+		channel.send(clientSession, encodeStringToByteBuffer(message));
 
 	}
 
-	public void handleTradeMessage(String message[]) {
-		StringBuilder sb = new StringBuilder("");
-		for (String s : message) {
-			sb.append(s);
-			sb.append("/");
-		}
-		logger.info("Handle a <Trade> Message   " + sb.toString());
-		channel.send(clientSession, encodeStringToByteBuffer(sb.toString()));
-
-	}
-
-	public void handleUnSupportMessage(String message[]) {
-		StringBuilder sb = new StringBuilder("");
-		for (String s : message) {
-			sb.append(s);
-			sb.append("/");
-		}
-		logger.info("Handle a <UnSupport> Message   " + sb.toString());
-		channel.send(clientSession, encodeStringToByteBuffer(sb.toString()));
+	public void handleUnSupportMessage(String message) {
+		logger.info("Handle a <UnSupport> Message   " + message);
+		channel.send(clientSession, encodeStringToByteBuffer(message));
 
 	}
 

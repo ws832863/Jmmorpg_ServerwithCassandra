@@ -38,6 +38,7 @@ public class Sword extends Item {
 		sbSword.append(description);
 		sbSword.append("|| owner Id :");
 		sbSword.append(owner_id);
+		
 		return sbSword.toString();
 	}
 }

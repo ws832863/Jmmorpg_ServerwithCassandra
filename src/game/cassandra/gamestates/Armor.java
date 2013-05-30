@@ -42,6 +42,8 @@ public class Armor extends Item {
 		sbArmor.append(description);
 		sbArmor.append("|| owner Id :");
 		sbArmor.append(owner_id);
+		//sbArmor.append("|| expired :");
+		//sbArmor.append(expired());
 		return sbArmor.toString();
 	}
 	public static void main(String[] args){

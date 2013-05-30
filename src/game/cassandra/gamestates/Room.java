@@ -61,8 +61,9 @@ public class Room extends GameManagedObjects {
 	/** The set of players in this room. */
 	private final Vector<ManagedReference<GamePlayerClientSessionListener>> playersSet = new Vector<ManagedReference<GamePlayerClientSessionListener>>();
 
-	private ManagedReferenceList itemsList = new ManagedReferenceList();
-	
+	// a managedlist to manage items
+	// private ManagedReference<ManagedReferenceList<Item>> itemsList;;
+
 	/** The message encoding. */
 	public static final String MESSAGE_CHARSET = "UTF-8";
 
@@ -77,16 +78,24 @@ public class Room extends GameManagedObjects {
 	 */
 	public Room(String name, String description) {
 		super(name, description);
+		// itemsList = AppContext.getDataManager().createReference(
+		// new ManagedReferenceList<Item>());
 	}
 
 	public boolean addItem(Item item) {
 		logger.log(Level.INFO, "{0} placed in {1}", new Object[] { item, this });
+
+		// itemsList.get().add(item);
+
 		// we can not directly save the item in the list
 		// instead we must save a managedreference to the item
+
 		DataManager dataMgr = AppContext.getDataManager();
 		dataMgr.markForUpdate(this);
 		ManagedReference<Item> itemRef = dataMgr.createReference(item);
-		this.showAllItemsInTheRoom();
+
+		// this.showAllItemsInTheRoom();
+
 		return items.add(itemRef);
 
 	}
@@ -106,7 +115,7 @@ public class Room extends GameManagedObjects {
 		// }
 		// itemsOnTheGround.append("------------------------------\n");
 
-		logger.log(Level.INFO, this.toString());
+		// logger.log(Level.INFO, itemsList.get().toString());
 	}
 
 	public String toString() {
@@ -162,17 +171,46 @@ public class Room extends GameManagedObjects {
 	}
 
 	public void destoryExpiretItem() {
-		DataManager dataManager = AppContext.getDataManager();
-		dataManager.markForUpdate(this);
-		for (ManagedReference<Item> itemRef : items) {
-			if ((System.currentTimeMillis() - itemRef.get().getProduceTime()) > 10000) {
-
-				logger.log(Level.INFO, "Item {0} expired,will be destoryed ",
-						itemRef.get());
-				items.remove(itemRef);
-				dataManager.removeObject(itemRef.get());
+		Iterator<ManagedReference<Item>> it = items.iterator();
+		ManagedReference<Item> iRef = null;
+		//AppContext.getDataManager().markForUpdate(this);
+		while (it.hasNext()) {
+			iRef = it.next();
+			if (iRef.get().expired()) {
+				items.remove(iRef);
+				AppContext.getDataManager().removeObject(iRef.get());
 			}
 		}
+
+		logger.log(Level.INFO, "trying to find expired items");
+		// Iterator<ManagedReference<Item>> it = itemsList.get().getIterator();
+		// DataManager dataManager = AppContext.getDataManager();
+		// dataManager.markForUpdate(this);
+		// dataManager.markForUpdate(itemsList.get());
+		//
+		// ManagedReference<Item> itRef = null;
+		// while (it.hasNext()) {
+		// itRef = it.next();
+		// if (itRef.get().expired()) {
+		// itemsList.get().remove(itRef.get());
+		// dataManager.removeObject(itRef.get());
+		//
+		// }
+		//
+		// }
+		//
+		// for (int i = 0; i < itemsList.size(); i++) {
+		// }
+		// for (Item item : itemsList) {
+		// if ((System.currentTimeMillis() - itemRef.get().getProduceTime()) >
+		// 10000) {
+		//
+		// logger.log(Level.INFO, "Item {0} expired,will be destoryed ",
+		// itemRef.get());
+		// items.remove(itemRef);
+		// dataManager.removeObject(itemRef.get());
+		// }
+		// }
 	}
 
 	// public String showPlayersPositions(GamePlayerClientSessionListener

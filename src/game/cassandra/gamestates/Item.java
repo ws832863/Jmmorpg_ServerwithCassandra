@@ -1,11 +1,18 @@
 package game.cassandra.gamestates;
 
 import java.io.Serializable;
+import java.util.Timer;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import com.sun.sgs.app.AppContext;
 import com.sun.sgs.app.ManagedObject;
+
+class TimerTask {
+	public TimerTask() {
+
+	}
+}
 
 /**
  * a abstract class represents the items in game world. all the items in game
@@ -26,7 +33,7 @@ public class Item implements Serializable, ManagedObject {
 	protected String description;
 	protected String uuidString = null;
 	protected long produceTime;
-	protected long existsTime = 10000;
+	protected long existsTime = 20000;
 
 	public Item(int price, String ownerId, String description) {
 		this.price = price;
@@ -34,6 +41,7 @@ public class Item implements Serializable, ManagedObject {
 		this.description = description;
 		this.uuidString = UUID.randomUUID().toString();
 		produceTime = System.currentTimeMillis();
+
 	}
 
 	public Item() {
@@ -41,7 +49,6 @@ public class Item implements Serializable, ManagedObject {
 		description = "A undescripted Item";
 		this.uuidString = UUID.randomUUID().toString();
 		produceTime = System.currentTimeMillis();
-
 	}
 
 	/*
@@ -110,6 +117,8 @@ public class Item implements Serializable, ManagedObject {
 
 	public void destoryMe() {
 		if (this.owner_id.equals("System")) {
+			System.out.println("destory my self");
+
 			AppContext.getDataManager().removeObject(this);
 		}
 	}
@@ -118,7 +127,10 @@ public class Item implements Serializable, ManagedObject {
 	 * all equipment exists 10 second, then destory it
 	 */
 	public boolean expired() {
+		AppContext.getDataManager().markForUpdate(this);
+
 		boolean flag = false;
+
 		if ((System.currentTimeMillis() - this.produceTime) > this.existsTime) {
 			flag = true;
 		}

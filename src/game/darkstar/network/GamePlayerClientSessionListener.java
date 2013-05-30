@@ -103,8 +103,8 @@ public class GamePlayerClientSessionListener extends GameManagedObjects
 	 * @return a player for the given session
 	 */
 	public static GamePlayerClientSessionListener loggedIn(ClientSession session) {
-		String playerBinding = PLAYER_BIND_PREFIX + session.getName();
 
+		String playerBinding = PLAYER_BIND_PREFIX + session.getName();
 		// try to find player object, if non existent then create
 		DataManager dataMgr = AppContext.getDataManager();
 		GamePlayerClientSessionListener player;
@@ -149,7 +149,7 @@ public class GamePlayerClientSessionListener extends GameManagedObjects
 	 * 
 	 * @return the session for this listener
 	 */
-	protected ClientSession getSession() {
+	public ClientSession getSession() {
 		if (currentSessionRef == null) {
 			return null;
 		}
@@ -187,15 +187,15 @@ public class GamePlayerClientSessionListener extends GameManagedObjects
 		room.addPlayerSession(this);
 		setRoom(room);
 		setPlayer(player);
+
 	}
 
 	/** {@inheritDoc} */
 	public void receivedMessage(ByteBuffer message) {
-		String command = decodeString(message);
-		// String[] mensagens = command.split("/");
 
-		logger.log(Level.INFO, "{0} received command: {1} " + command,
-				new Object[] { this, command });
+		String command = decodeString(message);
+		logger.log(Level.INFO, "{0} received command: {1} ", new Object[] {
+				this, command });
 
 		if (command.equalsIgnoreCase("look")) {
 			String reply = getRoom().look(this);
@@ -205,15 +205,7 @@ public class GamePlayerClientSessionListener extends GameManagedObjects
 					.send(encodeString("my inventory: "
 							+ getPlayer().getInventory()));
 		} else {
-
-			// handler.handleMessage(this, message);
-			logger.log(Level.WARNING, "{0} unknown command: {1}", new Object[] {
-					this, command });
-			getSession()
-					.send(encodeString("you send a unsupport command, currently only <look> support, you can type look to check other players around here"));
-			// We could disconnect the rogue player at this point.
-			// currentSession.disconnect();
-			// disconnected(true);
+			handler.handleMessage(this, command);
 		}
 
 	}
@@ -244,7 +236,7 @@ public class GamePlayerClientSessionListener extends GameManagedObjects
 		setRoom(null);
 
 		// remove the player from data manager
-		logger.log(Level.INFO, "remove bindung {0}", playerRef.get()
+		logger.log(Level.INFO, "remove binding {0}", playerRef.get()
 				.getUserName());
 		AppContext.getDataManager().removeBinding(
 				PLAYER_BIND_PREFIX + playerRef.get().getUserName());
