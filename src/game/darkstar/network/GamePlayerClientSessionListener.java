@@ -64,32 +64,6 @@ public class GamePlayerClientSessionListener extends GameManagedObjects
 	public GamePlayerClientSessionListener(String objetcName,
 			String objectDescription) {
 		super(objetcName, objectDescription);
-		handler = new MessageHandler();
-	}
-
-	public ManagedReference<GamePlayer> getPlayerRef() {
-		return playerRef;
-	}
-
-	public GamePlayer getPlayer() {
-		if (playerRef != null) {
-			return playerRef.get();
-		} else {
-			return null;
-		}
-	}
-
-	/*
-	 * userlogin in ,and set a Gameplayer instance for this user the gameplayer
-	 * get from the database and set a inventory for the player here
-	 */
-
-	public void setPlayerRef(ManagedReference<GamePlayer> playerRef) {
-
-		this.playerRef = playerRef;
-		this.setInventory(playerRef.get().getUserName());
-		// AppContext.getDataManager().createReference(
-		// playerRef.get().getInventory());
 	}
 
 	/**
@@ -100,7 +74,8 @@ public class GamePlayerClientSessionListener extends GameManagedObjects
 	 *            which session to find or create a player for
 	 * @return a player for the given session
 	 */
-	public static GamePlayerClientSessionListener loggedIn(ClientSession session) {
+	public static GamePlayerClientSessionListener loggedIn(
+			ClientSession session, GamePlayer gp) {
 
 		String playerBinding = PLAYER_BIND_PREFIX + session.getName();
 		// try to find player object, if non existent then create
@@ -112,34 +87,17 @@ public class GamePlayerClientSessionListener extends GameManagedObjects
 					.getBinding(playerBinding);
 		} catch (NameNotBoundException ex) {
 			// this is a new player
-			player = new GamePlayerClientSessionListener(playerBinding, "");
+			player = new GamePlayerClientSessionListener(playerBinding,
+					"a game user");
 			logger.log(Level.INFO, "New player created: {0}", player);
 			dataMgr.setBinding(playerBinding, player);
 
 		}
+		// this class has a instance of Gameplayer
+		player.setPlayer(gp);
 		player.setSession(session);
+		player.handler = new MessageHandler(player);
 		return player;
-	}
-
-	/**
-	 * try to find the users inventory in the object store if not found, then
-	 * create a new inventory store.
-	 * 
-	 * use database in the future
-	 * 
-	 * @param bind
-	 */
-	protected void setInventory(String bind) {
-		PlayerInventory inventory;
-		DataManager dataMgr = AppContext.getDataManager();
-		try {
-			inventory = (PlayerInventory) dataMgr.getBinding(bind);
-		} catch (NameNotBoundException ex) {
-			inventory = new PlayerInventory();
-			dataMgr.setBinding(bind, inventory);
-		}
-
-		this.getPlayer().setInventory(inventory);
 	}
 
 	/**
@@ -179,12 +137,11 @@ public class GamePlayerClientSessionListener extends GameManagedObjects
 	 * @param room
 	 *            the room for this player to enter
 	 */
-	public void enter(Room room, GamePlayer player) {
+	public void enter(Room room) {
 		logger.log(Level.INFO, "{0} enters {1} and {2}", new Object[] { this,
-				room, player });
+				room, getPlayer() });
 		room.addPlayerSession(this);
 		setRoom(room);
-		setPlayer(player);
 
 	}
 
@@ -237,6 +194,7 @@ public class GamePlayerClientSessionListener extends GameManagedObjects
 	 */
 
 	public void cleanUp() {
+		// don't forget clean up inventory
 		// setSession(null);
 		logger.log(Level.INFO, "User disconnect, cleanup");
 		getRoom().removePlayer(this);
@@ -288,6 +246,19 @@ public class GamePlayerClientSessionListener extends GameManagedObjects
 	}
 
 	/**
+	 * get the Gameplayer
+	 * 
+	 * @return GamePlayer
+	 */
+	public GamePlayer getPlayer() {
+		if (playerRef != null) {
+			return playerRef.get();
+		} else {
+			return null;
+		}
+	}
+
+	/**
 	 * set Gameplayer reference
 	 * 
 	 * @param player
@@ -302,19 +273,34 @@ public class GamePlayerClientSessionListener extends GameManagedObjects
 		}
 
 		playerRef = dataManager.createReference(player);
+		/*
+		 * this should happens outside, search the inventory from cassandra when
+		 * the use trying to login in , use dbhelper not here. but for using the
+		 * bind, we put in here
+		 */
+		setInventory(playerRef.get().getUserName());
 	}
 
-	//
-	// public void setGlobalControl(ManagedReference<GlobalPlayersControl>
-	// global) {
-	//
-	// DataManager dataManager = AppContext.getDataManager();
-	// dataManager.markForUpdate(this);
-	//
-	// //this.global = global;
-	// // global.get().containsUser(this.playerRef.get());
-	// // global.get().containsInventory(pi)
-	// }
+	/**
+	 * try to find the users inventory in the object store if not found, then
+	 * create a new inventory store.
+	 * 
+	 * use database in the future
+	 * 
+	 * @param bind
+	 */
+	protected void setInventory(String bind) {
+		PlayerInventory inventory;
+		DataManager dataMgr = AppContext.getDataManager();
+		try {
+			inventory = (PlayerInventory) dataMgr.getBinding(bind);
+		} catch (NameNotBoundException ex) {
+			inventory = new PlayerInventory();
+			dataMgr.setBinding(bind, inventory);
+		}
+
+		this.getPlayer().setInventory(inventory);
+	}
 
 	/**
 	 * Encodes a {@code String} into a {@link ByteBuffer}.

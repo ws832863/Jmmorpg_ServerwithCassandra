@@ -173,14 +173,14 @@ public class Room extends GameManagedObjects {
 	public void destoryExpiretItem() {
 		Iterator<ManagedReference<Item>> it = items.iterator();
 		ManagedReference<Item> iRef = null;
-		//AppContext.getDataManager().markForUpdate(this);
-		while (it.hasNext()) {
-			iRef = it.next();
-			if (iRef.get().expired()) {
-				items.remove(iRef);
-				AppContext.getDataManager().removeObject(iRef.get());
-			}
-		}
+		// AppContext.getDataManager().markForUpdate(this);
+		// while (it.hasNext()) {
+		// iRef = it.next();
+		// if (iRef.get().expired()) {
+		// items.remove(iRef);
+		// AppContext.getDataManager().removeObject(iRef.get());
+		// }
+		// }
 
 		logger.log(Level.INFO, "trying to find expired items");
 		// Iterator<ManagedReference<Item>> it = itemsList.get().getIterator();

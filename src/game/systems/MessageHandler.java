@@ -1,6 +1,7 @@
 package game.systems;
 
 import game.cassandra.Factorys.EquipmentFactory;
+import game.cassandra.data.GamePlayer;
 import game.cassandra.data.PlayerInventory;
 import game.cassandra.gamestates.Item;
 import game.cassandra.utils.Utils;
@@ -25,14 +26,59 @@ public class MessageHandler implements Serializable {
 	private ManagedReference<ClientSession> sessionRef = null;
 	private ManagedReference<GamePlayerClientSessionListener> playerSessionRef = null;
 	private ManagedReference<PlayerInventory> inventoryRef = null;
+	private ManagedReference<GamePlayer> playerRef = null;
 
 	/**
 	 * @param args
 	 */
 	public MessageHandler(GamePlayerClientSessionListener gcl) {
+		setGamePlayer(gcl.getPlayer());
+		setClientSession(gcl.getSession());
+		setInventory(getGamePlayer().getInventory());
 		playerSessionRef = AppContext.getDataManager().createReference(gcl);
-		sessionRef = AppContext.getDataManager().createReference(
-				playerSessionRef.get().getSession());
+
+	}
+
+	protected void setInventory(PlayerInventory pi) {
+		inventoryRef = AppContext.getDataManager().createReference(pi);
+	}
+
+	protected PlayerInventory getPlayerInventory() {
+		if (inventoryRef != null) {
+			return inventoryRef.get();
+		} else {
+			System.out.println("ERROR NULL INVENTORY");
+		}
+
+		return null;
+	}
+
+	protected void setGamePlayer(GamePlayer gp) {
+		if (gp == null)
+			return;
+
+		playerRef = AppContext.getDataManager().createReference(gp);
+
+	}
+
+	protected GamePlayer getGamePlayer() {
+		if (playerRef == null) {
+			return null;
+		}
+		return playerRef.get();
+	}
+
+	protected void setClientSession(ClientSession cs) {
+		if (cs == null)
+			return;
+		sessionRef = AppContext.getDataManager().createReference(cs);
+	}
+
+	protected ClientSession getClientSession() {
+		if (sessionRef == null) {
+			return null;
+		}
+		return sessionRef.get();
 	}
 
 	public MessageHandler() {
@@ -41,10 +87,6 @@ public class MessageHandler implements Serializable {
 
 	public void handleMessage(GamePlayerClientSessionListener gcl,
 			String message) {
-
-		playerSessionRef = AppContext.getDataManager().createReference(gcl);
-		sessionRef = AppContext.getDataManager().createReference(
-				playerSessionRef.get().getSession());
 
 		String decodeMsg = message;// Utils.decodeByteBufferToString(message);
 
@@ -61,7 +103,7 @@ public class MessageHandler implements Serializable {
 	}
 
 	public void handleLookaroundMessage(String message) {
-		getSession().send(
+		getClientSession().send(
 				Utils.encodeStringToByteBuffer("you send a command :"
 						+ message.toString()));
 
@@ -69,13 +111,13 @@ public class MessageHandler implements Serializable {
 
 	public void handleBuyMessage(String message) {
 		DataManager dm = AppContext.getDataManager();
-		inventoryRef = dm.createReference(playerSessionRef.get().getPlayer()
-				.getInventory());
-		dm.markForUpdate(inventoryRef.get());
+		// inventoryRef = dm.createReference(playerSessionRef.get().getPlayer()
+		// .getInventory());
+		// dm.markForUpdate(inventoryRef.get());
 		ManagedReference<Item> itemRef = dm.createReference(EquipmentFactory
 				.createRandomGameItem());
-		inventoryRef.get().add(itemRef.get());
-		getSession().send(
+		getPlayerInventory().add(itemRef.get());
+		getClientSession().send(
 				Utils.encodeStringToByteBuffer("you have bought a:"
 						+ itemRef.get().toString()));
 
@@ -83,30 +125,30 @@ public class MessageHandler implements Serializable {
 
 	public void handleSellMessage(String message) {
 		DataManager dm = AppContext.getDataManager();
-		inventoryRef = dm.createReference(playerSessionRef.get().getPlayer()
-				.getInventory());
-		dm.markForUpdate(inventoryRef.get());
+		// inventoryRef = dm.createReference(playerSessionRef.get().getPlayer()
+		// .getInventory());
+		// dm.markForUpdate(inventoryRef.get());
 
-		if (inventoryRef.get().getFirstItem() != null) {
-			ManagedReference<Item> item = dm.createReference(inventoryRef.get()
-					.getFirstItem());
+		if (getPlayerInventory().getFirstItem() != null) {
+			ManagedReference<Item> item = dm
+					.createReference(getPlayerInventory().getFirstItem());
 			System.out.println("delete this" + item.get().toString());
-			inventoryRef.get().delete(item.get());
-			getSession().send(
+			getPlayerInventory().delete(item.get());
+			getClientSession().send(
 					Utils.encodeStringToByteBuffer("deleted sucessful"));
 		} else {
-			getSession().send(
+			getClientSession().send(
 					Utils.encodeStringToByteBuffer("you have nothing to sell"));
 		}
 	}
 
 	public void handleUnSupportMessage(String message) {
 
-		getSession().send(
+		getClientSession().send(
 				Utils.encodeStringToByteBuffer("you send a unsupport command :"
 						+ message.toString()
 						+ "supported command(#look #buy #sell #inventory)"));
-		// getSession()
+		// getClientSession()
 		// .send(encodeString("you send a unsupport command("
 		// + command
 		// +
@@ -114,10 +156,4 @@ public class MessageHandler implements Serializable {
 
 	}
 
-	private ClientSession getSession() {
-		if (sessionRef != null) {
-			return sessionRef.get();
-		}
-		return null;
-	}
 }

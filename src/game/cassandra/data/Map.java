@@ -3,12 +3,10 @@ package game.cassandra.data;
 
 /**
  * 
- * @author Michel Montenegro
+ * @author Shuo Wang
  * 
  */
 public class Map {
-
-	private static final long serialVersionUID = 1L;
 
 	private int id;
 	private String name;

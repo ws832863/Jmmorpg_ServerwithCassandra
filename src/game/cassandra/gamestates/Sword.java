@@ -21,9 +21,9 @@ public class Sword extends Item {
 
 		this.attack = attack;
 		this.name = name;
-		super.owner_id = ownerId;
-		super.description = description;
+		super.OwnerUUIDString = ownerId;
 		super.price = price;
+		super.description = "2/" + name + "/" + attack + "/" + price;
 	}
 
 	public String toString() {
@@ -37,8 +37,10 @@ public class Sword extends Item {
 		sbSword.append("|| description :");
 		sbSword.append(description);
 		sbSword.append("|| owner Id :");
-		sbSword.append(owner_id);
-		
+		sbSword.append(OwnerUUIDString);
+		sbSword.append("|| UUId :");
+		sbSword.append(this.uuidString);
+
 		return sbSword.toString();
 	}
 }

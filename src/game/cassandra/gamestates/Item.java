@@ -1,18 +1,11 @@
 package game.cassandra.gamestates;
 
 import java.io.Serializable;
-import java.util.Timer;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import com.sun.sgs.app.AppContext;
 import com.sun.sgs.app.ManagedObject;
-
-class TimerTask {
-	public TimerTask() {
-
-	}
-}
 
 /**
  * a abstract class represents the items in game world. all the items in game
@@ -29,15 +22,15 @@ public class Item implements Serializable, ManagedObject {
 	private static final long serialVersionUID = -4360673646698717143L;
 
 	protected int price;
-	protected String owner_id = null;
+	// protected String owner_id = null;
 	protected String description;
 	protected String uuidString = null;
 	protected long produceTime;
-	protected long existsTime = 20000;
+	protected String OwnerUUIDString;
 
 	public Item(int price, String ownerId, String description) {
 		this.price = price;
-		this.owner_id = ownerId;
+		this.OwnerUUIDString = ownerId;
 		this.description = description;
 		this.uuidString = UUID.randomUUID().toString();
 		produceTime = System.currentTimeMillis();
@@ -54,10 +47,17 @@ public class Item implements Serializable, ManagedObject {
 	/*
 	 * each Item has a owner, if owner is null, it belongs to system
 	 */
-	public void setOwnerId(String ownerId) {
+	public void setOwnerUUIDString(String ownerId) {
 		AppContext.getDataManager().markForUpdate(this);
 
-		this.owner_id = ownerId;
+		this.OwnerUUIDString = ownerId;
+	}
+
+	/*
+	 * get the ownerIds, if this item has no owner yet, set the owner as system
+	 */
+	public String getOwnerUUIDString() {
+		return OwnerUUIDString == null ? "System" : OwnerUUIDString;
 	}
 
 	/*
@@ -89,22 +89,9 @@ public class Item implements Serializable, ManagedObject {
 		return price;
 	}
 
-	/*
-	 * get the ownerIds, if this item has no owner yet, set the owner as system
-	 */
-	public String getOwnerId() {
-		return owner_id == null ? "SystemFactory" : owner_id;
-	}
-
 	public String toString() {
-		return "A Item("
-				+ getUUIDString()
-				+ "): "
-				+ description
-				+ ", price : "
-				+ price
-				+ " expiredTime"
-				+ (this.existsTime - System.currentTimeMillis() - this.produceTime);
+		return "A Item(" + getUUIDString() + "): " + description + ", price : "
+				+ price + ")";
 	}
 
 	public String getUUIDString() {
@@ -116,26 +103,11 @@ public class Item implements Serializable, ManagedObject {
 	}
 
 	public void destoryMe() {
-		if (this.owner_id.equals("System")) {
-			System.out.println("destory my self");
-
-			AppContext.getDataManager().removeObject(this);
-		}
+		
+		AppContext.getDataManager().removeObject(this);
+		
 	}
 
-	/*
-	 * all equipment exists 10 second, then destory it
-	 */
-	public boolean expired() {
-		AppContext.getDataManager().markForUpdate(this);
-
-		boolean flag = false;
-
-		if ((System.currentTimeMillis() - this.produceTime) > this.existsTime) {
-			flag = true;
-		}
-		return flag;
-	}
 
 	public long getProduceTime() {
 		return this.produceTime;
@@ -160,7 +132,6 @@ public class Item implements Serializable, ManagedObject {
 
 		for (int i = 0; i < 20; i++) {
 
-			System.out.println(i1.expired());
 			TimeUnit.MILLISECONDS.sleep(1000);
 		}
 		System.out.println(i1);

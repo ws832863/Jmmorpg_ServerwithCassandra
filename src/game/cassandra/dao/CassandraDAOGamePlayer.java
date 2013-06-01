@@ -1,8 +1,11 @@
 package game.cassandra.dao;
 
-import game.cassandra.conn.CassandraConnection;
+import game.cassandra.Factorys.GamePlayerFactory;
+import game.cassandra.conn.CassandraHelper;
 import game.cassandra.data.GamePlayer;
+import game.cassandra.utils.Utils;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -40,13 +43,17 @@ import me.prettyprint.hector.api.query.SliceQuery;
 import org.apache.log4j.Logger;
 
 public class CassandraDAOGamePlayer {
+
+	private static CassandraHelper dbHelper = CassandraHelper
+			.getCassandraHelperInstance();
+
 	private final static Logger logger = Logger
 			.getLogger(CassandraDAOGamePlayer.class.getName());
 
-	private final static Cluster gameCluster = CassandraConnection.getCluster();
+	private final static Cluster gameCluster = dbHelper.getGameCluster();
+	// CassandraConnection.getCluster();
 
-	private final static String KeySpaceName = CassandraConnection
-			.getKeySpaceName();
+	private final static String KeySpaceName = dbHelper.getKeySpaceName();
 
 	private final static StringSerializer stringSerializer = StringSerializer
 			.get();
@@ -82,15 +89,14 @@ public class CassandraDAOGamePlayer {
 				.setConsistencyLevelPolicy(new AllOneConsistencyLevelPolicy());
 	}
 
-	public void selectByPk(int rowKey) {
-		String key = String.valueOf(rowKey);
+	public void selectByPk(String rowKey) {
 		vos.removeAllElements();
 
 		SliceQuery<String, String, String> query = HFactory.createSliceQuery(
 				keyspaceOperator, stringSerializer, stringSerializer,
 				stringSerializer);
 
-		query.setKey(key).setColumnFamily(ColumnFamilyName);
+		query.setKey(rowKey).setColumnFamily(ColumnFamilyName);
 
 		ColumnSliceIterator<String, String, String> iterator = new ColumnSliceIterator<String, String, String>(
 				query, null, "\uFFFF", false);
@@ -102,8 +108,9 @@ public class CassandraDAOGamePlayer {
 			tempResult.put(c.getName(), c.getValue());
 		}
 		logger.info("get a user by pk " + tempResult.toString());
-		vos.add(this.mappingHashMapIntoGamePlayerObject(key, tempResult));
-
+		if (tempResult.size() != 0) {
+			vos.add(this.mappingHashMapIntoGamePlayerObject(rowKey, tempResult));
+		}
 	}
 
 	public void selectByLoginName(String Loginname) {
@@ -265,7 +272,7 @@ public class CassandraDAOGamePlayer {
 
 	}
 
-	public void addNewGamePlayer(List<GamePlayer> listGp) {
+	public MutationResult addNewGamePlayer(List<GamePlayer> listGp) {
 		ColumnFamilyTemplate<String, String> columnFamilyTemplate = new ThriftColumnFamilyTemplate<String, String>(
 				keyspaceOperator, ColumnFamilyName, stringSerializer,
 				stringSerializer);
@@ -290,15 +297,15 @@ public class CassandraDAOGamePlayer {
 					String.valueOf(gp.getClassId()),
 					String.valueOf(gp.getRaceId()));
 			i++;
-			if (i % 100 == 0) {
+			if (i % 1000 == 0) {
 				System.out.println(mutator.execute().getExecutionTimeMicro());
 			}
 		}
-		mutator.execute();
+		return mutator.execute();
 
 	}
 
-	public void addNewGamePlayer(GamePlayer gp) {
+	public MutationResult addNewGamePlayer(GamePlayer gp) {
 		ColumnFamilyTemplate<String, String> columnFamilyTemplate = new ThriftColumnFamilyTemplate<String, String>(
 				keyspaceOperator, ColumnFamilyName, stringSerializer,
 				stringSerializer);
@@ -322,11 +329,13 @@ public class CassandraDAOGamePlayer {
 						String.valueOf(gp.getClassId()),
 						String.valueOf(gp.getRaceId()));
 		MutationResult mr = mutator.execute();
-		System.out.println("time: " + mr.getExecutionTimeMicro());
+		return mr;
 	}
 
 	private GamePlayer mappingHashMapIntoGamePlayerObject(String rowkey,
 			HashMap<String, String> h) {
+		if (h == null)
+			return null;
 		GamePlayer gp = new GamePlayer();
 		gp.setUUIDString(rowkey);
 		gp.setUserName(h.get("username"));
@@ -490,65 +499,41 @@ public class CassandraDAOGamePlayer {
 		try {
 
 			if (gameCluster.describeKeyspace(KeySpaceName) != null) {
-				gameCluster.dropColumnFamily(KeySpaceName, ColumnFamilyName,
-						true);
+				try {
+					gameCluster.dropColumnFamily(KeySpaceName,
+							ColumnFamilyName, true);
+				} catch (HectorException he) {
+
+				} finally {
+					gameCluster.addColumnFamily(cfLoginUserDef);
+
+				}
 			} else {
+				logger.debug("Keyspace " + KeySpaceName
+						+ " not exists, create it");
 				gameCluster.addKeyspace(keyspaceDefinition);
 			}
 
 		} catch (HectorException he) {
 			logger.warn("a error occured :" + he.toString());
 		}
-		gameCluster.addColumnFamily(cfLoginUserDef);
 
 		logger.info(" cassandra gameplayer schema sucessfuly <======");
 
 	}
 
-	public static void GamePlayerPrePopulate() {
-		ColumnFamilyTemplate<String, String> columnFamilyTemplate = new ThriftColumnFamilyTemplate<String, String>(
-				keyspaceOperator, ColumnFamilyName, stringSerializer,
-				stringSerializer);
-		keyspaceOperator
-				.setConsistencyLevelPolicy(new AllOneConsistencyLevelPolicy());
-		Mutator<String> mutator = columnFamilyTemplate.createMutator();
+	public void GamePlayerPrePopulate(int n) {
+
 		// add a default user
 		// addInsseration(mutator, "1");
-		String dateString = CassandraConnection.CurrentDateString;
-		addInsseration(mutator, "1", "player1", "player", dateString,
-				"127.0.0.1", dateString, "wangshuo", "testmail@gmail.com",
-				"1985-10-25", "1", "Assisin", "Human", "100", "100", "0",
-				"1000", "10", "10", "10", "1", "1");
-		addInsseration(mutator, "2", "player2", "player", dateString,
-				"127.0.0.1", dateString, "wangshuo", "testmail@gmail.com",
-				"1987-03-21", "1", "Assisin", "Human", "100", "100", "0",
-				"1000", "10", "10", "10", "2", "2");
-		addInsseration(mutator, "3", "player3", "player", dateString,
-				"127.0.0.1", dateString, "wangshuo", "testmail@gmail.com",
-				"1975-07-12", "1", "Assisin", "Human", "100", "100", "0",
-				"1000", "10", "10", "10", "3", "1");
-		addInsseration(mutator, "4", "player4", "player", dateString,
-				"127.0.0.1", dateString, "wangshuo", "testmail@gmail.com",
-				"1986-01-29", "1", "Assisin", "Human", "100", "100", "0",
-				"1000", "10", "10", "10", "4", "2");
-		addInsseration(mutator, "5", "player5", "player", dateString,
-				"127.0.0.1", dateString, "wangshuo", "testmail@gmail.com",
-				"1999-11-05", "1", "Assisin", "Human", "100", "100", "0",
-				"1000", "10", "10", "10", "5", "1");
-		addInsseration(mutator, "6", "player6", "player", dateString,
-				"127.0.0.1", dateString, "wangshuo", "testmail@gmail.com",
-				"1979-10-25", "1", "Assisin", "Human", "100", "100", "0",
-				"1000", "10", "10", "10", "6", "2");
-		addInsseration(mutator, "7", "player7", "player", dateString,
-				"127.0.0.1", dateString, "wangshuo", "testmail@gmail.com",
-				"1988-03-04", "1", "Assisin", "Human", "100", "100", "0",
-				"1000", "10", "10", "10", "7", "1");
-		addInsseration(mutator, "8", "player8", "player", dateString,
-				"127.0.0.1", dateString, "wangshuo", "testmail@gmail.com",
-				"1989-06-12", "1", "Assisin", "Human", "100", "100", "0",
-				"1000", "10", "10", "10", "8", "2");
-
-		mutator.execute();
+		List<GamePlayer> playerList = new ArrayList<GamePlayer>();
+		for (int i = 1; i < n; i++) {
+			playerList.add(GamePlayerFactory.createPlayer("player" + i,
+					"player"));
+		}
+		System.out.println("Preinsert " + n + " playerdate in cassandra, used "
+				+ this.addNewGamePlayer(playerList).getExecutionTimeMicro()
+				+ "Microseconds");
 	}
 
 	private static void addInsseration(Mutator<String> mut, String rowkey,
@@ -633,18 +618,17 @@ public class CassandraDAOGamePlayer {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		// CassandraDAOGamePlayer.createGamePlayerSchema();
-		// CassandraDAOGamePlayer.GamePlayerPrePopulate();
+		CassandraDAOGamePlayer.createGamePlayerSchema();
 		CassandraDAOGamePlayer cdp = new CassandraDAOGamePlayer();
+		cdp.GamePlayerPrePopulate(1000);
 		cdp.selectAll();
-		// cdp.selectByPk(5);
-		// cdp.selectByLoginName("player1");
-		// cdp.testVectorClans();
-		// List<GamePlayer> ll = new ArrayList<GamePlayer>();
-		// for (int i = 0; i < 1000; i++) {
-		// ll.add(GamePlayerFactory.createPlayer());
+		cdp.selectByLoginName("player1");
+		cdp.testVectorClans();
+		List<GamePlayer> ll = new ArrayList<GamePlayer>();
+		for (int i = 0; i < 1000; i++) {
+			ll.add(GamePlayerFactory.createPlayer());
 
-		// }
-		// cdp.addNewGamePlayer(ll);
+		}
+		cdp.addNewGamePlayer(ll);
 	}
 }

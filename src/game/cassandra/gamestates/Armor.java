@@ -2,7 +2,6 @@ package game.cassandra.gamestates;
 
 import game.cassandra.Factorys.EquipmentFactory;
 
-
 public class Armor extends Item {
 
 	/**
@@ -25,9 +24,10 @@ public class Armor extends Item {
 
 		this.defense = defense;
 		this.name = name;
-		super.owner_id = ownerId;
-		super.description = description;
+		super.OwnerUUIDString = ownerId;
 		super.price = price;
+		// 1 means armor
+		super.description = "1/" + name + "/" + defense + "/" + price;
 	}
 
 	public String toString() {
@@ -41,19 +41,21 @@ public class Armor extends Item {
 		sbArmor.append("|| description :");
 		sbArmor.append(description);
 		sbArmor.append("|| owner Id :");
-		sbArmor.append(owner_id);
-		//sbArmor.append("|| expired :");
-		//sbArmor.append(expired());
+		sbArmor.append(OwnerUUIDString);
+		sbArmor.append("UUID").append(this.getUUIDString());
+		// sbArmor.append("|| expired :");
+		// sbArmor.append(expired());
 		return sbArmor.toString();
 	}
-	public static void main(String[] args){
-		Armor a1=EquipmentFactory.createArmor();
-		Armor a2=EquipmentFactory.createArmor();
-		Armor a3=EquipmentFactory.createArmor();
+
+	public static void main(String[] args) {
+		Armor a1 = EquipmentFactory.createArmor();
+		Armor a2 = EquipmentFactory.createArmor();
+		Armor a3 = EquipmentFactory.createArmor();
 		a3.setUUIDString(a1.getUUIDString());
-		
+
 		System.out.println(a1.equals(a2));
 		System.out.println(a1.equals(a3));
-		
+
 	}
 }

@@ -1,6 +1,6 @@
 package game.cassandra.dao;
 
-import game.cassandra.conn.CassandraConnection;
+import game.cassandra.conn.CassandraHelper;
 import game.cassandra.data.Map;
 
 import java.util.Arrays;
@@ -49,10 +49,11 @@ public class CassandraDAOMap {
 	private final static Logger logger = Logger.getLogger(CassandraDAOMap.class
 			.getName());
 
-	private final static Cluster gameCluster = CassandraConnection.getCluster();
+	private static CassandraHelper dbHelper = CassandraHelper
+			.getCassandraHelperInstance();
+	private final static Cluster gameCluster = dbHelper.getGameCluster();// CassandraConnection.getCluster();
 
-	private final static String KeySpaceName = CassandraConnection
-			.getKeySpaceName();
+	private final static String KeySpaceName = dbHelper.getKeySpaceName();
 
 	private final static StringSerializer stringSerializer = StringSerializer
 			.get();
@@ -112,9 +113,9 @@ public class CassandraDAOMap {
 			HColumn<String, String> c = iterator.next();
 			tempResult.put(c.getName(), c.getValue());
 		}
-
-		vos.add(this.mappingHashMapIntoMapObject(key, tempResult));
-
+		if (tempResult.size() != 0) {
+			vos.add(this.mappingHashMapIntoMapObject(key, tempResult));
+		}
 	}
 
 	public void selectAll() {
@@ -264,24 +265,27 @@ public class CassandraDAOMap {
 						Arrays.asList(CFMapDef));
 
 		try {
-
 			// if the keyspace exists
 			if (gameCluster.describeKeyspace(KeySpaceName) != null) {
+				try {
+					gameCluster.dropColumnFamily(KeySpaceName,
+							ColumnFamilyName, true);
+				} catch (HectorException he) {
 
-				gameCluster.dropColumnFamily(KeySpaceName, ColumnFamilyName,
-						true);
-				gameCluster.addColumnFamily(CFMapDef);
-
+				} finally {
+					gameCluster.addColumnFamily(CFMapDef);
+				}
 			} else {
-				logger.debug("Keyspace not exists, create it");
+				logger.debug("Keyspace " + KeySpaceName
+						+ " not exists, create it");
 				gameCluster.addKeyspace(keyspaceDefinition);
 			}
 
 		} catch (HectorException he) {
 			logger.warn("a error occured :" + he.toString());
-			gameCluster.addColumnFamily(CFMapDef);
 		}
-		logger.info(" MapSchema created<=======");
+
+		logger.info("Column Family Map Schema created sucessfully<=======");
 
 	}
 
@@ -292,10 +296,10 @@ public class CassandraDAOMap {
 		ColumnFamilyTemplate<String, String> columnFamilyTemplate = new ThriftColumnFamilyTemplate<String, String>(
 				keyspaceOperator, ColumnFamilyName, stringSerializer,
 				stringSerializer);
-		//set consistency policy as read one write one.
+		// set consistency policy as read one write one.
 		keyspaceOperator
 				.setConsistencyLevelPolicy(new AllOneConsistencyLevelPolicy());
-		
+
 		Mutator<String> mutator = columnFamilyTemplate.createMutator();
 
 		mutator.addInsertion("1", ColumnFamilyName,
