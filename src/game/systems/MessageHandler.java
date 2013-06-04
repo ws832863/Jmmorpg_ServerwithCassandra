@@ -24,7 +24,6 @@ public class MessageHandler implements Serializable {
 	// private Logger logger = Logger.getLogger(MessageHandler.class.getName());
 
 	private ManagedReference<ClientSession> sessionRef = null;
-	private ManagedReference<GamePlayerClientSessionListener> playerSessionRef = null;
 	private ManagedReference<PlayerInventory> inventoryRef = null;
 	private ManagedReference<GamePlayer> playerRef = null;
 
@@ -35,7 +34,6 @@ public class MessageHandler implements Serializable {
 		setGamePlayer(gcl.getPlayer());
 		setClientSession(gcl.getSession());
 		setInventory(getGamePlayer().getInventory());
-		playerSessionRef = AppContext.getDataManager().createReference(gcl);
 
 	}
 
@@ -132,10 +130,9 @@ public class MessageHandler implements Serializable {
 		if (getPlayerInventory().getFirstItem() != null) {
 			ManagedReference<Item> item = dm
 					.createReference(getPlayerInventory().getFirstItem());
-			System.out.println("delete this" + item.get().toString());
 			getPlayerInventory().delete(item.get());
 			getClientSession().send(
-					Utils.encodeStringToByteBuffer("deleted sucessful"));
+					Utils.encodeStringToByteBuffer("deleted on item sucessful"));
 		} else {
 			getClientSession().send(
 					Utils.encodeStringToByteBuffer("you have nothing to sell"));

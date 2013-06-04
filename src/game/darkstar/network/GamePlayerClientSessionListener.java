@@ -1,5 +1,7 @@
 package game.darkstar.network;
 
+import game.cassandra.dao.GamePlayerHelper;
+import game.cassandra.dao.InventoryHelper;
 import game.cassandra.data.GamePlayer;
 import game.cassandra.data.PlayerInventory;
 import game.cassandra.gamestates.GameManagedObjects;
@@ -149,8 +151,8 @@ public class GamePlayerClientSessionListener extends GameManagedObjects
 	public void receivedMessage(ByteBuffer message) {
 
 		String command = decodeString(message);
-		logger.log(Level.INFO, "{0} received command: {1} ", new Object[] {
-				this, command });
+		// logger.log(Level.INFO, "{0} received command: {1} ", new Object[] {
+		// this, command });
 
 		if (command.equalsIgnoreCase("look")) {
 
@@ -196,6 +198,7 @@ public class GamePlayerClientSessionListener extends GameManagedObjects
 	public void cleanUp() {
 		// don't forget clean up inventory
 		// setSession(null);
+		persistToDB();
 		logger.log(Level.INFO, "User disconnect, cleanup");
 		getRoom().removePlayer(this);
 		setRoom(null);
@@ -205,9 +208,32 @@ public class GamePlayerClientSessionListener extends GameManagedObjects
 				.getUserName());
 		AppContext.getDataManager().removeBinding(
 				PLAYER_BIND_PREFIX + playerRef.get().getUserName());
+		// remove reference of the user's inventory
+		AppContext.getDataManager().removeObject(getPlayer().getInventory());
+		// remove reference of the player
 		AppContext.getDataManager().removeObject(playerRef.get());
 		playerRef = null;
 		logger.log(Level.INFO, "clean up finished");
+	}
+
+	/**
+	 * persist all player and inventory to DB
+	 */
+	public void persistToDB() {
+		DataManager dm = AppContext.getDataManager();
+		try {
+			AppContext.getDataManager().removeObject(
+					dm.getBinding(getPlayer().getUUIDString()));
+			AppContext.getDataManager().removeBinding(
+					getPlayer().getUUIDString());
+			GamePlayerHelper gp = new GamePlayerHelper();
+			InventoryHelper ih = new InventoryHelper();
+			gp.logOutInformationPersistence(this.getPlayer());
+			ih.InventoryToDataBase(getPlayer().getInventory());
+		} catch (NameNotBoundException ex) {
+
+		}
+
 	}
 
 	/**
@@ -278,7 +304,7 @@ public class GamePlayerClientSessionListener extends GameManagedObjects
 		 * the use trying to login in , use dbhelper not here. but for using the
 		 * bind, we put in here
 		 */
-		setInventory(playerRef.get().getUserName());
+		// setInventory(playerRef.get().getUserName());
 	}
 
 	/**

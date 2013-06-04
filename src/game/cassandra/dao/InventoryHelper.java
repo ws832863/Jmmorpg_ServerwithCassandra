@@ -1,8 +1,18 @@
 package game.cassandra.dao;
 
 import game.cassandra.data.PlayerInventory;
+import game.cassandra.gamestates.Item;
 
-public class InventoryHelper {
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
+import me.prettyprint.hector.api.mutation.MutationResult;
+
+public class InventoryHelper  {
+	/**
+	 * 
+	 */
 	InventoryDAO iDao;
 
 	public InventoryHelper() {
@@ -33,4 +43,12 @@ public class InventoryHelper {
 
 	}
 
+	public MutationResult insertModifiedItemTask(List<Item> list) {
+		return iDao.addMultiItem(list);
+	}
+
+	public MutationResult deleteModifiedItemTask(
+			HashMap<String, ArrayList<String>> hm) {
+		return iDao.removeMultiItem(hm);
+	}
 }

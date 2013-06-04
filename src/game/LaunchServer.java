@@ -4,13 +4,17 @@ import game.cassandra.Factorys.GamePlayerFactory;
 import game.cassandra.conn.ManagedConfigurationHelper;
 import game.cassandra.dao.CassandraDAOGamePlayer;
 import game.cassandra.dao.CassandraDAOMap;
+import game.cassandra.dao.GamePlayerHelper;
 import game.cassandra.dao.InventoryDAO;
-import game.cassandra.dao.UserLoginHelper;
 import game.cassandra.data.GamePlayer;
 import game.cassandra.data.Map;
 import game.cassandra.gamestates.Room;
+import game.cassandra.perodictask.GlobalModifiedItemList;
+import game.cassandra.perodictask.TaskPersistFinishedListToCassandra;
+import game.cassandra.perodictask.TaskSetListLoaded;
 import game.darkstar.network.GameChannelsListener;
 import game.darkstar.network.GamePlayerClientSessionListener;
+import game.drakstar.task.PerodicPersistInventory;
 
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
@@ -33,7 +37,7 @@ import com.sun.sgs.app.ClientSessionListener;
 import com.sun.sgs.app.DataManager;
 import com.sun.sgs.app.Delivery;
 import com.sun.sgs.app.ManagedReference;
-import com.sun.sgs.tutorial.server.swordworld.SwordWorldRoom;
+import com.sun.sgs.app.TaskManager;
 
 /**
  * 
@@ -67,13 +71,15 @@ public class LaunchServer implements AppListener, Serializable {
 
 	@Override
 	public void initialize(Properties arg0) {
+
 		DataManager dataManager = AppContext.getDataManager();
 		ManagedConfigurationHelper dbInformation = new ManagedConfigurationHelper(
 				"", "");
+
 		dataManager.setBinding("CONFIG", dbInformation);
 		cassandraDataInit();
 		// unitTestFunction();
-
+		GlobalModifiedItemList.getSingletonGlobalModifiedItemList();
 		this.channels = new HashSet<ManagedReference<Channel>>();
 		this.rooms = new HashSet<ManagedReference<Room>>();
 
@@ -120,11 +126,10 @@ public class LaunchServer implements AppListener, Serializable {
 		logger.info("Starting init periodic tasks");
 
 		// schedule the task
-		// TaskManager tm = AppContext.getTaskManager();
-		// tm.schedulePeriodicTask(new ProduceItemInTheRoom(r), 0,
-		// 3000);
-		// tm.schedulePeriodicTask(new TaskDestoryExpiredItem(r), 0,
-		// 20000);
+		TaskManager tm = AppContext.getTaskManager();
+		tm.schedulePeriodicTask(new TaskSetListLoaded(), 5000, 5000);
+		tm.schedulePeriodicTask(new TaskPersistFinishedListToCassandra(),
+				10000, 6000);
 
 		logger.info("-- JMMORPG Server has Initialized ---");
 
@@ -141,22 +146,28 @@ public class LaunchServer implements AppListener, Serializable {
 		 */
 		String name = session.getName();
 		logger.log(Level.INFO, "JMMORPG Client trying to login: {0}", name);
-		UserLoginHelper check = new UserLoginHelper();
+		GamePlayerHelper helper = new GamePlayerHelper();
 		// check if the user exists in cassandra,not check the password,only
-		// searching the username
-		GamePlayer gamePlayer = check.checkUser(name, "player");
+		// searching the username// and meantime get inventory set to player
+		GamePlayer gamePlayer = helper.checkUser(name, "player");
 		// a map instance, represent which map are the user currently in.
 		Map map = null;
 
 		// the users exists and get the gameplayer information from database
 		if (gamePlayer != null) {
-			session.send(encodeString(check.verfiedString()));
-			map = check.getMap();
+			System.out.println("get the user from db "
+					+ gamePlayer.getUserName());
 		} else {
 			// if we can't find a user, return null, the the client will receive
 			// a login failed information
-			return null;
+			System.out.println("Creating new user " + session.getName());
+
+			gamePlayer = helper.createUser(session.getName());
+
 		}
+		session.send(encodeString(helper.formatVerifyString(gamePlayer)));
+		map = helper.getMap();
+
 		// end of create Gameplayer instance
 
 		// we get the user from database, then send the user position
@@ -196,6 +207,13 @@ public class LaunchServer implements AppListener, Serializable {
 						+ map.getStartTileHeroPosX() + "/"
 						+ map.getStartTileHeroPosY() + "/" + map.getPosition()
 						+ "/"));
+
+		// TaskManager tm = AppContext.getTaskManager();
+		// PerodicPersistInventory task = new
+		// PerodicPersistInventory(gamePlayer);
+		// // tm.schedulePeriodicTask(task, 5000, 5000);
+		// AppContext.getDataManager()
+		// .setBinding(gamePlayer.getUUIDString(), task);
 
 		// return player object as listener to this client session
 		return SessionPlayer;
@@ -240,14 +258,18 @@ public class LaunchServer implements AppListener, Serializable {
 	private void cassandraDataInit() {
 		System.out
 				.println("=================>Cassandra Data Schema init, this happens only once");
-		CassandraDAOGamePlayer.createGamePlayerSchema();
 		CassandraDAOGamePlayer cdp = new CassandraDAOGamePlayer();
-		cdp.GamePlayerPrePopulate(100);
-		CassandraDAOMap.createMapSchema();
 		CassandraDAOMap cdm = new CassandraDAOMap();
-		CassandraDAOMap.prepopulateMapData();
 		InventoryDAO idao = new InventoryDAO();
+
 		idao.createInventorySchema();
+		CassandraDAOGamePlayer.createGamePlayerSchema();
+		CassandraDAOMap.createMapSchema();
+
+		List<String> playerUuids = cdp.GamePlayerPrePopulate(100);
+		idao.prepopulateForUsers(playerUuids);
+		CassandraDAOMap.prepopulateMapData();
+
 		System.out
 				.println("Cassandra Data Schema init sucessfully=============================<");
 	}

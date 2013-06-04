@@ -21,17 +21,14 @@
 
 package game.cassandra.gamestates;
 
-import game.cassandra.data.ManagedReferenceList;
 import game.darkstar.network.GamePlayerClientSessionListener;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;

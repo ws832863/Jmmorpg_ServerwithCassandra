@@ -5,9 +5,14 @@ import game.cassandra.gamestates.Armor;
 import game.cassandra.gamestates.Item;
 import game.cassandra.gamestates.Sword;
 
+import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Vector;
 
@@ -39,7 +44,12 @@ import me.prettyprint.hector.api.query.SliceQuery;
 
 import org.apache.log4j.Logger;
 
-public class InventoryDAO {
+public class InventoryDAO implements Serializable {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -6885602600343068038L;
 
 	/**
 	 * @param args
@@ -81,13 +91,16 @@ public class InventoryDAO {
 				.setName("money");
 		QueryResult<HColumn<String, String>> result = columnQuery.execute();
 
-		System.out.println(result.get().getName());
-		System.out.println(result.get().getValue());
+		// System.out.println(result.get().getName());
+		// System.out.println(result.get().getValue());
 		int money = 0;
-		try {
-			money = Integer.valueOf(result.get().getValue());
-		} catch (Exception ex) {
-			return 0;
+
+		if (result != null) {
+			try {
+				money = Integer.valueOf(result.get().getValue());
+			} catch (Exception ex) {
+				return 0;
+			}
 		}
 		return money;
 
@@ -97,7 +110,6 @@ public class InventoryDAO {
 	 * update the Inventorys money
 	 */
 	public MutationResult updateMoney(String rowkey, long money) {
-		System.out.println("rowkey:" + rowkey + "money" + money);
 		if (rowkey == null) {
 			return null;
 		}
@@ -126,22 +138,6 @@ public class InventoryDAO {
 	}
 
 	/*
-	 * remove multiitem in a inventory
-	 */
-	public MutationResult removeMultiItem(Vector<Item> itemList) {
-		ColumnFamilyTemplate<String, String> columnFamilyTemplate = new ThriftColumnFamilyTemplate<String, String>(
-				keyspaceOperator, ColumnFamilyName, stringSerializer,
-				stringSerializer);
-		keyspaceOperator
-				.setConsistencyLevelPolicy(new AllOneConsistencyLevelPolicy());
-		Mutator<String> mutator = columnFamilyTemplate.createMutator();
-		for (Item item : itemList) {
-			this.addDeletionToMut(mutator, item);
-		}
-		return mutator.execute();
-	}
-
-	/*
 	 * remove on item in the inventory
 	 */
 	public MutationResult removeItem(Item item) {
@@ -155,23 +151,40 @@ public class InventoryDAO {
 				item.getUUIDString(), stringSerializer);
 	}
 
-	private void addDeletionToMut(Mutator<String> mut, Item item) {
-		mut.addDeletion(item.getOwnerUUIDString(), ColumnFamilyName,
-				item.getUUIDString(), stringSerializer);
-	}
-
-	public MutationResult addMultiItem(Vector<Item> itemSet) {
+	public MutationResult removeMultiItem(HashMap<String, ArrayList<String>> hm) {
 		ColumnFamilyTemplate<String, String> columnFamilyTemplate = new ThriftColumnFamilyTemplate<String, String>(
 				keyspaceOperator, ColumnFamilyName, stringSerializer,
 				stringSerializer);
 		keyspaceOperator
 				.setConsistencyLevelPolicy(new AllOneConsistencyLevelPolicy());
 		Mutator<String> mutator = columnFamilyTemplate.createMutator();
-		for (Item item : itemSet) {
-			ItemToHColumn(mutator, item);
+		Set<Entry<String, ArrayList<String>>> entrys = hm.entrySet();
+		Set<HColumn<String, String>> columns = new HashSet<HColumn<String, String>>();
+		for (Entry<String, ArrayList<String>> e : entrys) {
+			List<String> itemUids = e.getValue();
+			for (String s : itemUids) {
+				mutator.addDeletion(e.getKey(), ColumnFamilyName, s,
+						stringSerializer);
+			}
 		}
-		MutationResult mr = mutator.execute();
-		return mr;
+
+		return mutator.execute();
+	}
+
+	/*
+	 * remove multiitem for multi row in a inventory
+	 */
+	public MutationResult removeMultiItem(List<Item> itemList) {
+		ColumnFamilyTemplate<String, String> columnFamilyTemplate = new ThriftColumnFamilyTemplate<String, String>(
+				keyspaceOperator, ColumnFamilyName, stringSerializer,
+				stringSerializer);
+		keyspaceOperator
+				.setConsistencyLevelPolicy(new AllOneConsistencyLevelPolicy());
+		Mutator<String> mutator = columnFamilyTemplate.createMutator();
+		for (Item item : itemList) {
+			this.addDeletionToMut(mutator, item);
+		}
+		return mutator.execute();
 	}
 
 	/*
@@ -196,7 +209,26 @@ public class InventoryDAO {
 
 	}
 
-	private void ItemToHColumn(Mutator<String> mut, Item item) {
+	public MutationResult addMultiItem(List<Item> itemSet) {
+		ColumnFamilyTemplate<String, String> columnFamilyTemplate = new ThriftColumnFamilyTemplate<String, String>(
+				keyspaceOperator, ColumnFamilyName, stringSerializer,
+				stringSerializer);
+		keyspaceOperator
+				.setConsistencyLevelPolicy(new AllOneConsistencyLevelPolicy());
+		Mutator<String> mutator = columnFamilyTemplate.createMutator();
+		for (Item item : itemSet) {
+			addInsertionToMut(mutator, item);
+		}
+		MutationResult mr = mutator.execute();
+		return mr;
+	}
+
+	private void addDeletionToMut(Mutator<String> mut, Item item) {
+		mut.addDeletion(item.getOwnerUUIDString(), ColumnFamilyName,
+				item.getUUIDString(), stringSerializer);
+	}
+
+	private void addInsertionToMut(Mutator<String> mut, Item item) {
 		// use the playeruuid as inventory's rowkey
 		String rowKey = item.getOwnerUUIDString();
 		// make other properties of item as a string
@@ -205,6 +237,11 @@ public class InventoryDAO {
 
 		mut.addInsertion(rowKey, ColumnFamilyName,
 				HFactory.createColumn(name, value));
+	}
+
+	private HColumn<String, String> itemToHColumn(Item item) {
+		return HFactory.createColumn(item.getUUIDString(),
+				item.getDescription());
 	}
 
 	/*
@@ -246,8 +283,7 @@ public class InventoryDAO {
 				}
 				// set the uuid for this item
 				item.setUUIDString(c.getName());
-				System.out.println("get a data from database:"
-						+ item.toString());
+		
 				vos.add(item);
 			} // tempResult.put(c.getName(), c.getValue());
 		}
@@ -315,6 +351,24 @@ public class InventoryDAO {
 
 		logger.info(" cassandra Item schema sucessfuly <======");
 
+	}
+
+	public MutationResult prepopulateForUsers(List<String> playerUUIDs) {
+		ColumnFamilyTemplate<String, String> columnFamilyTemplate = new ThriftColumnFamilyTemplate<String, String>(
+				keyspaceOperator, ColumnFamilyName, stringSerializer,
+				stringSerializer);
+
+		keyspaceOperator
+				.setConsistencyLevelPolicy(new AllOneConsistencyLevelPolicy());
+
+		Mutator<String> mutator = columnFamilyTemplate.createMutator();
+
+		for (String s : playerUUIDs) {
+			mutator.addInsertion(s, ColumnFamilyName,
+					HFactory.createColumn("money", "999999"));
+		}
+		MutationResult mr = mutator.execute();
+		return mr;
 	}
 
 	public static void main(String[] args) {

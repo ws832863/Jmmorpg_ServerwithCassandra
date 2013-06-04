@@ -522,18 +522,24 @@ public class CassandraDAOGamePlayer {
 
 	}
 
-	public void GamePlayerPrePopulate(int n) {
+	public List<String> GamePlayerPrePopulate(int n) {
 
 		// add a default user
 		// addInsseration(mutator, "1");
 		List<GamePlayer> playerList = new ArrayList<GamePlayer>();
+		List<String> uuids = new ArrayList<String>();
+		GamePlayer g;
 		for (int i = 1; i < n; i++) {
-			playerList.add(GamePlayerFactory.createPlayer("player" + i,
-					"player"));
+			g = GamePlayerFactory.createPlayer("player" + i, "player");
+			uuids.add(g.getUUIDString());
+			playerList.add(g);
+
 		}
 		System.out.println("Preinsert " + n + " playerdate in cassandra, used "
 				+ this.addNewGamePlayer(playerList).getExecutionTimeMicro()
 				+ "Microseconds");
+		
+		return uuids;
 	}
 
 	private static void addInsseration(Mutator<String> mut, String rowkey,
