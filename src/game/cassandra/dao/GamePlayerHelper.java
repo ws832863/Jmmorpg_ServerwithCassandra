@@ -50,6 +50,8 @@ public class GamePlayerHelper {
 		GamePlayer gPlayer = null;
 
 		try {
+			// get a user by username from cassandra database
+
 			cdgp.selectByLoginName(username);
 
 			if (cdgp.getVos() != null && !cdgp.getVos().isEmpty()) {
@@ -57,13 +59,14 @@ public class GamePlayerHelper {
 
 				logger.log(Level.INFO,
 						"Get the userinformation from database:\n");
-				System.out.println("username >>>>" + gPlayer.getUserName());
-				System.out.println("classe >>>>" + gPlayer.getHeroClass());
-
-				System.out.println("Race >>>>" + gPlayer.getHeroRace());
+				// System.out.println("username >>>>" + gPlayer.getUserName());
+				// System.out.println("classe >>>>" + gPlayer.getHeroClass());
+				//
+				// System.out.println("Race >>>>" + gPlayer.getHeroRace());
 
 				// get the users inventory
-				pi=inventoryHelper.getUsersInventoryFromDb(gPlayer.getUUIDString());
+				pi = inventoryHelper.getUsersInventoryFromDb(gPlayer
+						.getUUIDString());
 				gPlayer.setInventory(pi);
 				// which map are the users in
 

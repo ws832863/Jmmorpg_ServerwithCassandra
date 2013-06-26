@@ -23,10 +23,12 @@ public class TaskPersistFinishedListToCassandra implements Task, Serializable {
 	public TaskPersistFinishedListToCassandra() {
 		finishRef = AppContext.getDataManager().createReference(
 				FinishedListManager.getSingletonFinishedListManager());
+
 	}
 
 	@Override
 	public void run() throws Exception {
+		long startTime = System.currentTimeMillis();
 		InventoryHelper ih = new InventoryHelper();
 		if (finishRef.get().getSize() > 0) {
 
@@ -62,6 +64,10 @@ public class TaskPersistFinishedListToCassandra implements Task, Serializable {
 						+ " Microseconds");
 			}
 			AppContext.getDataManager().removeObject(ml.get());
+
+			long endTime = System.currentTimeMillis();
+			long taskTime = endTime - startTime;
+			System.out.println("PersistTast executed:" + taskTime);
 
 		}
 

@@ -65,6 +65,7 @@ public class FinishedListManager implements ManagedObject, Serializable {
 	 */
 
 	public ModifiedItemList combineAll() {
+		AppContext.getDataManager().markForUpdate(this);
 		logger.info("Tring to combine " + getSize() + "lists into One");
 		ModifiedItemList mfi = loadedListRef.poll().get();
 		for (int i = 0; i < this.getSize()-1; i++) {

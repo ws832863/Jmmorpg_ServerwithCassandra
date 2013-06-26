@@ -87,6 +87,7 @@ public class GamePlayerClientSessionListener extends GameManagedObjects
 		try {
 			player = (GamePlayerClientSessionListener) dataMgr
 					.getBinding(playerBinding);
+			System.out.println("found user old session");
 		} catch (NameNotBoundException ex) {
 			// this is a new player
 			player = new GamePlayerClientSessionListener(playerBinding,
@@ -137,11 +138,11 @@ public class GamePlayerClientSessionListener extends GameManagedObjects
 	 * Handles a player entering a room.
 	 * 
 	 * @param room
-	 *            the room for this player to enter
+	 *            e the room for this player to enter
 	 */
 	public void enter(Room room) {
-		logger.log(Level.INFO, "{0} enters {1} and {2}", new Object[] { this,
-				room, getPlayer() });
+		logger.log(Level.INFO, "{0} enters room and {2}", new Object[] { this,
+				getPlayer() });
 		room.addPlayerSession(this);
 		setRoom(room);
 
@@ -198,21 +199,36 @@ public class GamePlayerClientSessionListener extends GameManagedObjects
 	public void cleanUp() {
 		// don't forget clean up inventory
 		// setSession(null);
+		/*
+		 * some thing must be clean up. 1,currentsession the player
+		 * usesd(currentsession) 2,instance and bind of GameplayerclientSession
+		 * 3,Gameplayer 4,inventory of this player(and items created)
+		 */
+		// first persist everything to DB
 		persistToDB();
 		logger.log(Level.INFO, "User disconnect, cleanup");
+		// remove player session from the room
 		getRoom().removePlayer(this);
 		setRoom(null);
 
-		// remove the player from data manager
-		logger.log(Level.INFO, "remove binding {0}", playerRef.get()
-				.getUserName());
-		AppContext.getDataManager().removeBinding(
-				PLAYER_BIND_PREFIX + playerRef.get().getUserName());
-		// remove reference of the user's inventory
+		// remove reference of the user's inventory(GamePlayers Inventory)
 		AppContext.getDataManager().removeObject(getPlayer().getInventory());
-		// remove reference of the player
+		// remove reference of the player(GamePlayer)
 		AppContext.getDataManager().removeObject(playerRef.get());
 		playerRef = null;
+
+		// remove GamePlayerClientsSession binding data store and data binding
+	
+		/*
+		 * the user leaves, can not remove client session anymore
+		 * 
+		 * AppContext.getDataManager().removeBinding( PLAYER_BIND_PREFIX +
+		 * currentSessionRef.get().getName());
+		 * 
+		 * //AppContext.getDataManager().removeObject(this); // remove client
+		 * session
+		 * AppContext.getDataManager().removeObject(currentSessionRef.get());
+		 */
 		logger.log(Level.INFO, "clean up finished");
 	}
 
@@ -220,16 +236,13 @@ public class GamePlayerClientSessionListener extends GameManagedObjects
 	 * persist all player and inventory to DB
 	 */
 	public void persistToDB() {
-		DataManager dm = AppContext.getDataManager();
+
 		try {
-			AppContext.getDataManager().removeObject(
-					dm.getBinding(getPlayer().getUUIDString()));
-			AppContext.getDataManager().removeBinding(
-					getPlayer().getUUIDString());
 			GamePlayerHelper gp = new GamePlayerHelper();
 			InventoryHelper ih = new InventoryHelper();
 			gp.logOutInformationPersistence(this.getPlayer());
 			ih.InventoryToDataBase(getPlayer().getInventory());
+
 		} catch (NameNotBoundException ex) {
 
 		}

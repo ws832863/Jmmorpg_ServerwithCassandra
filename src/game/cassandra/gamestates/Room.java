@@ -116,23 +116,24 @@ public class Room extends GameManagedObjects {
 	}
 
 	public String toString() {
-		StringBuilder itemsOnTheGround = new StringBuilder(
-				"Items produced by system, in the room :");
-		itemsOnTheGround.append(items.size());
-
-		itemsOnTheGround.append("\n");
-		itemsOnTheGround.append(getObjectName());
-		itemsOnTheGround.append("\n");
-
-		itemsOnTheGround.append(" ------------------------------\n");
-
-		for (ManagedReference<Item> itemRef : items) {
-			itemsOnTheGround.append(itemRef.get());
-			itemsOnTheGround.append("\n");
-		}
-		itemsOnTheGround.append("------------------------------\n");
-
-		return itemsOnTheGround.toString();
+		return "room_one";
+//		StringBuilder itemsOnTheGround = new StringBuilder(
+//				"Items produced by system, in the room :");
+//		itemsOnTheGround.append(items.size());
+//
+//		itemsOnTheGround.append("\n");
+//		itemsOnTheGround.append(getObjectName());
+//		itemsOnTheGround.append("\n");
+//
+//		itemsOnTheGround.append(" ------------------------------\n");
+//
+//		for (ManagedReference<Item> itemRef : items) {
+//			itemsOnTheGround.append(itemRef.get());
+//			itemsOnTheGround.append("\n");
+//		}
+//		itemsOnTheGround.append("------------------------------\n");
+//
+//		return itemsOnTheGround.toString();
 	}
 
 	/**

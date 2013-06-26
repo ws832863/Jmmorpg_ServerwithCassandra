@@ -17,6 +17,42 @@ public class ManagedConfigurationHelper extends GameManagedObjects {
 	private String host;
 	private String keyspaceName;
 	private String clusterIp;
+	int modifyDelay;
+	int modifyPeriod;
+	int persistDelay;
+	int persistPeriod;
+
+	public int getModifyDelay() {
+		return modifyDelay;
+	}
+
+	public void setModifyDelay(int modifyDelay) {
+		this.modifyDelay = modifyDelay;
+	}
+
+	public int getModifyPeriod() {
+		return modifyPeriod;
+	}
+
+	public void setModifyPeriod(int modifyPeriod) {
+		this.modifyPeriod = modifyPeriod;
+	}
+
+	public int getPersistDelay() {
+		return persistDelay;
+	}
+
+	public void setPersistDelay(int persistDelay) {
+		this.persistDelay = persistDelay;
+	}
+
+	public int getPersistPeriod() {
+		return persistPeriod;
+	}
+
+	public void setPersistPeriod(int persistPeriod) {
+		this.persistPeriod = persistPeriod;
+	}
 
 	public String getClusterIp() {
 		return clusterIp;
@@ -86,10 +122,19 @@ public class ManagedConfigurationHelper extends GameManagedObjects {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+
 		this.setClusterName(p.getProperty("ClusterName"));
 		this.setHost(p.getProperty("Host"));
 		this.setKeyspaceName(p.getProperty("KeySpaceName"));
 		this.setClusterIp(p.getProperty("ClusterIp"));
+
+		this.setModifyDelay(Integer.parseInt(p.getProperty("CheckModifyDelay")));
+		this.setModifyPeriod(Integer.parseInt(p
+				.getProperty("CheckModifyPeriod")));
+		this.setPersistDelay(Integer.parseInt(p.getProperty("PersistTaskDelay")));
+		this.setPersistPeriod(Integer.parseInt(p
+				.getProperty("PersistTaskPeriod")));
+
 		// this.setKeyspaceName(p.getProperty(""));
 
 	}

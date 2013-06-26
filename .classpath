@@ -2,18 +2,8 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
-	<classpathentry kind="lib" path="libs/je-3.3.98.jar"/>
-	<classpathentry kind="lib" path="libs/sgs-server-api-0.10.2.1.jar" sourcepath="/home/parallels/sgs-server-dist-0.10.2.1/src/sgs-server-api-0.10.2.1-sources.jar"/>
-	<classpathentry kind="lib" path="libs/sgs-server-internal-api-0.10.2.1.jar" sourcepath="/home/parallels/sgs-server-dist-0.10.2.1/src/sgs-server-internal-api-0.10.2.1-sources.jar">
-		<attributes>
-			<attribute name="javadoc_location" value="http://www.jarvana.com/jarvana/view/com/projectdarkstar/server/sgs-server-javadoc/0.9.7.2/sgs-server-javadoc-0.9.7.2-all.jar!/overview-summary.html"/>
-		</attributes>
-	</classpathentry>
-	<classpathentry kind="lib" path="libs/sgs-server-0.10.2.1.jar" sourcepath="/home/parallels/sgs-server-dist-0.10.2.1/src/sgs-server-0.10.2.1-sources.jar"/>
-	<classpathentry kind="lib" path="libs/sgs-shared-1.12.jar" sourcepath="/home/parallels/sgs-server-dist-0.10.2.1/src/sgs-shared-1.12-sources.jar"/>
-	<classpathentry kind="lib" path="libs/jung-graph-impl-2.0.jar"/>
-	<classpathentry exported="true" kind="con" path="org.eclipse.jdt.USER_LIBRARY/Cassandra-Hectorclient"/>
-	<classpathentry kind="lib" path="/home/parallels/sgs-server-dist-0.10.2.1/tutorial/tutorial.jar"/>
-	<classpathentry kind="lib" path="/home/parallels/sgs-server-dist-0.10.2.1/deploy/JMMORPG_SERVER.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/libsDarkstar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/libsHector"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/libsCassandra124"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

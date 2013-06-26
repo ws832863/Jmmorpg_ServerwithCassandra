@@ -19,6 +19,8 @@ public class GlobalModifiedItemList implements Serializable, ManagedObject {
 			.getLogger(GlobalModifiedItemList.class.getName());
 	private ManagedReference<ModifiedItemList> currentListRef;
 
+	private boolean changingList = false;
+
 	private GlobalModifiedItemList() {
 		currentListRef = AppContext.getDataManager().createReference(
 				new ModifiedItemList());
@@ -39,21 +41,36 @@ public class GlobalModifiedItemList implements Serializable, ManagedObject {
 	public ModifiedItemList getCurrentListRef() {
 		// not set finished by another check task
 		// every five second
-		//AppContext.getDataManager().markForUpdate(this);
+		// AppContext.getDataManager().markForUpdate(this);
 		if (!currentListRef.get().isFinished()) {
 			return currentListRef.get();
 
 		} else {
-			logger.log(Level.INFO, "===List is set to finished, added "
-					+ currentListRef.get().getAddedSize()
-					+ "items and deleted "
-					+ currentListRef.get().getDeletedSize() + "===");
-			currentListRef.get().setLoaded(true);
-			FinishedListManager.getSingletonFinishedListManager()
-					.insertInQueue(currentListRef);
-			currentListRef = AppContext.getDataManager().createReference(
-					new ModifiedItemList());
+			System.out
+					.println("list be set to full, check if some changing list");
+			if (changingList == false) {
+				System.out.println("no one changing. i will change it");
+				changingList = true;
+				AppContext.getDataManager().markForUpdate(this);
+				logger.log(Level.INFO, "===List is set to finished, added "
+						+ currentListRef.get().getAddedSize()
+						+ "items and deleted "
+						+ currentListRef.get().getDeletedSize() + "===");
+				currentListRef.get().setLoaded(true);
+				FinishedListManager.getSingletonFinishedListManager()
+						.insertInQueue(currentListRef);
+				currentListRef = AppContext.getDataManager().createReference(
+						new ModifiedItemList());
+			} else {
+
+				System.out
+						.println("someone is changing the list!!!!!!!!!!!!!!!!!!!!!! read it");
+				getCurrentListRef();
+			}
+			changingList = false;
+
 			return currentListRef.get();
+
 		}
 	}
 

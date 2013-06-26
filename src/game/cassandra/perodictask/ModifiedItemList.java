@@ -6,7 +6,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -14,6 +13,7 @@ import java.util.logging.Logger;
 import com.sun.sgs.app.AppContext;
 import com.sun.sgs.app.ManagedObject;
 import com.sun.sgs.app.ManagedReference;
+import com.sun.sgs.app.ObjectNotFoundException;
 
 public class ModifiedItemList implements Serializable, ManagedObject {
 
@@ -99,6 +99,7 @@ public class ModifiedItemList implements Serializable, ManagedObject {
 	}
 
 	public void setFinished(boolean finished) {
+		AppContext.getDataManager().markForUpdate(this);
 		this.finished = finished;
 	}
 
@@ -112,8 +113,14 @@ public class ModifiedItemList implements Serializable, ManagedObject {
 
 	public List<Item> getItemList() {
 		ArrayList<Item> al = new ArrayList<Item>();
+		System.out.println(addItemList.size());
 		for (ManagedReference<Item> i : addItemList) {
-			al.add(i.get());
+			try {
+				al.add(i.get());
+			} catch (ObjectNotFoundException ex) {
+				System.out.println("(i=null:)" + i == null);
+			}
+
 		}
 		return al;
 

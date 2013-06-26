@@ -9,7 +9,7 @@ import java.util.List;
 
 import me.prettyprint.hector.api.mutation.MutationResult;
 
-public class InventoryHelper  {
+public class InventoryHelper {
 	/**
 	 * 
 	 */

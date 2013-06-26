@@ -144,7 +144,7 @@ public class MessageHandler implements Serializable {
 		getClientSession().send(
 				Utils.encodeStringToByteBuffer("you send a unsupport command :"
 						+ message.toString()
-						+ "supported command(#look #buy #sell #inventory)"));
+						+ " supported command(#look #buy #sell #inventory)"));
 		// getClientSession()
 		// .send(encodeString("you send a unsupport command("
 		// + command

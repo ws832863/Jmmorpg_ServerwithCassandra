@@ -127,9 +127,11 @@ public class LaunchServer implements AppListener, Serializable {
 
 		// schedule the task
 		TaskManager tm = AppContext.getTaskManager();
-		tm.schedulePeriodicTask(new TaskSetListLoaded(), 5000, 5000);
+		tm.schedulePeriodicTask(new TaskSetListLoaded(),
+				dbInformation.getModifyDelay(), dbInformation.getModifyPeriod());
 		tm.schedulePeriodicTask(new TaskPersistFinishedListToCassandra(),
-				10000, 6000);
+				dbInformation.getPersistDelay(),
+				dbInformation.getPersistPeriod());
 
 		logger.info("-- JMMORPG Server has Initialized ---");
 

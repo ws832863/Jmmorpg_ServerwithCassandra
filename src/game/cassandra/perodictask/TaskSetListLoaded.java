@@ -4,7 +4,6 @@ import java.io.Serializable;
 
 import com.sun.sgs.app.AppContext;
 import com.sun.sgs.app.ManagedReference;
-import com.sun.sgs.app.NameNotBoundException;
 import com.sun.sgs.app.Task;
 
 public class TaskSetListLoaded implements Task, Serializable {
@@ -29,17 +28,16 @@ public class TaskSetListLoaded implements Task, Serializable {
 		// the list will put the queue ready for insert to cassandra
 		int addsize = globalRef.get().getCurrentListRef().getAddedSize();
 		int delsize = globalRef.get().getCurrentListRef().getDeletedSize();
-		System.out.println("addsize " + addsize + "delsize " + delsize);
-		System.out.println(addsize + delsize);
-		if (addsize + delsize >= 1) {
-			System.out.println("Set a list to finished in a task");
 
+		if (addsize + delsize >= 1) {
+			System.out.println("Task Trying to set a list as finished");
+			// AppContext.getDataManager().markForUpdate(globalRef);
 			globalRef.get().setFinished();
 
 		} else {
 			System.out.println("Nothing in the modified list,do nothing");
 		}
-		//FinishedListManager.getSingletonFinishedListManager().showAllList();
+		// FinishedListManager.getSingletonFinishedListManager().showAllList();
 
 	}
 
