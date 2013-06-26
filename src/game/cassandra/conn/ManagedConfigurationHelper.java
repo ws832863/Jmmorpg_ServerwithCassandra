@@ -135,7 +135,7 @@ public class ManagedConfigurationHelper extends GameManagedObjects {
 		this.setPersistPeriod(Integer.parseInt(p
 				.getProperty("PersistTaskPeriod")));
 
-		// this.setKeyspaceName(p.getProperty(""));
+		
 
 	}
 
