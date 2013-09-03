@@ -499,15 +499,16 @@ public class CassandraDAOGamePlayer {
 		try {
 
 			if (gameCluster.describeKeyspace(KeySpaceName) != null) {
-				try {
+
+				boolean exist = CassandraDAOGamePlayer
+						.checkColumnFamilyExists(ColumnFamilyName);
+				if (exist) {
 					gameCluster.dropColumnFamily(KeySpaceName,
 							ColumnFamilyName, true);
-				} catch (HectorException he) {
-
-				} finally {
-					gameCluster.addColumnFamily(cfLoginUserDef);
-
 				}
+
+				gameCluster.addColumnFamily(cfLoginUserDef);
+
 			} else {
 				logger.debug("Keyspace " + KeySpaceName
 						+ " not exists, create it");
@@ -538,7 +539,7 @@ public class CassandraDAOGamePlayer {
 		System.out.println("Preinsert " + n + " playerdate in cassandra, used "
 				+ this.addNewGamePlayer(playerList).getExecutionTimeMicro()
 				+ "Microseconds");
-		
+
 		return uuids;
 	}
 
@@ -618,6 +619,23 @@ public class CassandraDAOGamePlayer {
 			vo = it.next();
 			System.out.println("   " + vo.toString() + "   ");
 		}
+	}
+
+	private static boolean checkColumnFamilyExists(String ColumnFamilyName) {
+
+		List<ColumnFamilyDefinition> cfdList = gameCluster.describeKeyspace(
+				KeySpaceName).getCfDefs();
+		Iterator<ColumnFamilyDefinition> i = cfdList.iterator();
+		while (i.hasNext()) {
+			ColumnFamilyDefinition cfd = i.next();
+			System.out.println(cfd.getName());
+			if (cfd.getName().equals(ColumnFamilyName)) {
+				logger.debug("ColumnFamily exists in the Keyspace, drop it "
+						+ ColumnFamilyName);
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**

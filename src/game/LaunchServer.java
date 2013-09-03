@@ -268,7 +268,7 @@ public class LaunchServer implements AppListener, Serializable {
 		CassandraDAOGamePlayer.createGamePlayerSchema();
 		CassandraDAOMap.createMapSchema();
 
-		List<String> playerUuids = cdp.GamePlayerPrePopulate(100);
+		List<String> playerUuids = cdp.GamePlayerPrePopulate(10);
 		idao.prepopulateForUsers(playerUuids);
 		CassandraDAOMap.prepopulateMapData();
 

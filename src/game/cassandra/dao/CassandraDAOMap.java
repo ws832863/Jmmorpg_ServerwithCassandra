@@ -6,6 +6,7 @@ import game.cassandra.data.Map;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Vector;
 
 import me.prettyprint.cassandra.model.AllOneConsistencyLevelPolicy;
@@ -263,18 +264,16 @@ public class CassandraDAOMap {
 				.createKeyspaceDefinition(KeySpaceName,
 						"org.apache.cassandra.locator.SimpleStrategy", 3,
 						Arrays.asList(CFMapDef));
-
 		try {
-			// if the keyspace exists
 			if (gameCluster.describeKeyspace(KeySpaceName) != null) {
-				try {
+				boolean exist = checkColumnFamilyExists(ColumnFamilyName);
+				if (exist) {
 					gameCluster.dropColumnFamily(KeySpaceName,
 							ColumnFamilyName, true);
-				} catch (HectorException he) {
-
-				} finally {
-					gameCluster.addColumnFamily(CFMapDef);
 				}
+
+				gameCluster.addColumnFamily(CFMapDef);
+
 			} else {
 				logger.debug("Keyspace " + KeySpaceName
 						+ " not exists, create it");
@@ -329,6 +328,23 @@ public class CassandraDAOMap {
 			vo = it.next();
 			System.out.println(vo.toString());
 		}
+	}
+
+	private static boolean checkColumnFamilyExists(String ColumnFamilyName) {
+
+		List<ColumnFamilyDefinition> cfdList = gameCluster.describeKeyspace(
+				KeySpaceName).getCfDefs();
+		Iterator<ColumnFamilyDefinition> i = cfdList.iterator();
+		while (i.hasNext()) {
+			ColumnFamilyDefinition cfd = i.next();
+			System.out.println(cfd.getName());
+			if (cfd.getName().equals(ColumnFamilyName)) {
+				logger.debug("ColumnFamily exists in the Keyspace, drop it "
+						+ ColumnFamilyName);
+				return true;
+			}
+		}
+		return false;
 	}
 
 	// used for test this class

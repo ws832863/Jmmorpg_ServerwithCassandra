@@ -60,9 +60,9 @@ public class InventoryDAO implements Serializable {
 	private final static Logger logger = Logger.getLogger(InventoryDAO.class
 			.getName());
 
-	private Cluster gameCluster = dbHelper.getGameCluster();
+	private static Cluster gameCluster = dbHelper.getGameCluster();
 
-	private String KeySpaceName = dbHelper.getKeySpaceName();
+	private static String KeySpaceName = dbHelper.getKeySpaceName();
 
 	private static StringSerializer stringSerializer = StringSerializer.get();
 
@@ -283,7 +283,7 @@ public class InventoryDAO implements Serializable {
 				}
 				// set the uuid for this item
 				item.setUUIDString(c.getName());
-		
+
 				vos.add(item);
 			} // tempResult.put(c.getName(), c.getValue());
 		}
@@ -321,21 +321,35 @@ public class InventoryDAO implements Serializable {
 				.createKeyspaceDefinition(KeySpaceName,
 						"org.apache.cassandra.locator.SimpleStrategy", 1,
 						Arrays.asList(cfItemDef));
-
 		try {
-
 			if (gameCluster.describeKeyspace(KeySpaceName) != null) {
-				try {
-					// if the keyspace exists, drop the columnfamily, with the
-					// same name
-					gameCluster.dropColumnFamily(KeySpaceName,
-							ColumnFamilyName, true);
-				} catch (HectorException he) {
 
-				} finally {
-					// add columnfamily to the exists keyspace
-					gameCluster.addColumnFamily(cfItemDef);
+				// if the keyspace exists, drop the columnfamily, with the
+				// same name
+				boolean cfexist = false;
+				List<ColumnFamilyDefinition> cfdList = gameCluster
+						.describeKeyspace(KeySpaceName).getCfDefs();
+				Iterator<ColumnFamilyDefinition> i = cfdList.iterator();
+				while (i.hasNext()) {
+					ColumnFamilyDefinition cfd = i.next();
+					System.out.println(cfd.getName());
+
+					if (cfd.getName().equals(ColumnFamilyName)) {
+						logger.debug("ColumnFamily exists in the Keyspace, drop it "
+								+ this.ColumnFamilyName);
+						cfexist = true;
+						break;
+					}
 				}
+
+				if (cfexist == true) {
+					gameCluster
+							.dropColumnFamily(KeySpaceName, ColumnFamilyName);
+				}
+
+				// add the columnfamily definition to the column family
+				gameCluster.addColumnFamily(cfItemDef);
+
 			} else {
 				logger.debug("Keyspace " + KeySpaceName
 						+ " not exists, create it");
@@ -344,12 +358,12 @@ public class InventoryDAO implements Serializable {
 
 		} catch (HectorException he) {
 			logger.warn("a error occured :" + he.toString());
-
+			he.printStackTrace();
 		} finally {
 
 		}
 
-		logger.info(" cassandra Item schema sucessfuly <======");
+		logger.info(" cassandra Inventory schema sucessfuly <======");
 
 	}
 
@@ -369,6 +383,23 @@ public class InventoryDAO implements Serializable {
 		}
 		MutationResult mr = mutator.execute();
 		return mr;
+	}
+
+	private static boolean checkColumnFamilyExists(String ColumnFamilyName) {
+
+		List<ColumnFamilyDefinition> cfdList = gameCluster.describeKeyspace(
+				KeySpaceName).getCfDefs();
+		Iterator<ColumnFamilyDefinition> i = cfdList.iterator();
+		while (i.hasNext()) {
+			ColumnFamilyDefinition cfd = i.next();
+			System.out.println(cfd.getName());
+			if (cfd.getName().equals(ColumnFamilyName)) {
+				logger.debug("ColumnFamily exists in the Keyspace, drop it "
+						+ ColumnFamilyName);
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public static void main(String[] args) {
